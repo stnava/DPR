@@ -13,12 +13,13 @@ import shutil
 
 # get some data
 image = ants.image_read( "data/blocki.nii.gz")
-image = ants.iMath(image,"Normalize").pad_image(  pad_width=(16,16,16) )
+p=(8,8,8)
+image = ants.iMath(image,"Normalize").pad_image(  pad_width=[p,p,p] )
 seg = ants.threshold_image( image, 'Otsu', 3 )
 mdlfn='models/CSRS.R.TV.D.Res6.h5'
 
 # make some transforms
-rRotGenerator = ants.contrib.RandomRotate3D( ( 0, 10 ), reference=image )
+rRotGenerator = ants.contrib.RandomRotate3D( ( 0, 50 ), reference=image )
 tx0 = rRotGenerator.transform()
 tx0inv = ants.invert_ants_transform(tx0)
 
@@ -31,7 +32,7 @@ ssr = antspyt1w.label_and_img_to_sr(
             return_intensity=True )
 rimg = tx0.apply_to_image( ssr['super_resolution'] )
 rimgrSR1 = tx0inv.apply_to_image( rimg )
-dprimgSR1 = ants.resample_image_to_target( rimgrSR1, image )
+dprimgSR1 = ants.resample_image_to_target( rimgrSR1, image, interp_type='nearestNeighbor' )
 dprsnr1 = antspynet.psnr(image, dprimgSR1 )
 dprssim1 = antspynet.ssim(image, dprimgSR1 )
 
@@ -46,7 +47,7 @@ ssr2 = antspyt1w.label_and_img_to_sr(
             srmdl,
             return_intensity=True )
 rimgrSR2 = ssr2['super_resolution']
-dprimgSR2 = ants.resample_image_to_target( rimgrSR2, image )
+dprimgSR2 = ants.resample_image_to_target( rimgrSR2, image, interp_type='nearestNeighbor' )
 dprsnr2 = antspynet.psnr(image, dprimgSR2 )
 dprssim2 = antspynet.ssim(image, dprimgSR2 )
 
@@ -58,3 +59,6 @@ ants.image_write( image, '/tmp/ground_truth.nii.gz')
 ants.image_write( rimgr, '/tmp/rimgr.nii.gz')
 ants.image_write( dprimgSR1, '/tmp/dprimgSR1.nii.gz')
 ants.image_write( dprimgSR2, '/tmp/dprimgSR2.nii.gz')
+
+print( str(dprsnr1) + " " + str(dprsnr2) + " " + str(dprsnr3) )
+print( str(dprssim1) + " " + str(dprssim2) + " " + str(dprssim3) )
