@@ -522,7 +522,7 @@ if os.path.isfile(ofn):
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
 ct = 0
-opt = tf.keras.optimizers.Adam(learning_rate=1e-5)
+opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 
 
 # model compilation
