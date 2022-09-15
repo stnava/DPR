@@ -465,13 +465,15 @@ def my_loss_54(y_true, y_pred):
 
 # In[82]:
 
-
+nfilt=64
+nff = 256
+convn = 5
 mdl = dbpn( (None,None,3),
   number_of_outputs=3,
-  number_of_base_filters=32,
-  number_of_feature_filters=128,
+  number_of_base_filters=nfilt,
+  number_of_feature_filters=nff,
   number_of_back_projection_stages=nbp,
-  convolution_kernel_size=(9, 9),
+  convolution_kernel_size=(convn, convn),
   strides=(1, 1),
   last_convolution=(3, 3), number_of_loss_functions=1, interpolation='nearest')
 
@@ -512,9 +514,13 @@ patch1, patch2 = get_random_patch_pair( img, img2 )
 # get pre-trained network weights
 
 # In[92]:
+nfilt=64
+nff = 256
+convn = 5
 
 
-ofn='./models/dpr_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
+ofn='./models/dpr_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' +
+    str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
 
 if os.path.isfile(ofn):
     print( "load " + ofn )
