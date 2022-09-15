@@ -10,8 +10,8 @@
 import os.path
 from os import path
 # !pip uninstall antspyx
-get_ipython().system('pip install antspyx')
-get_ipython().system('pip install git+https://github.com/ANTsX/ANTsPyNet')
+# get_ipython().system('pip install antspyx')
+# get_ipython().system('pip install git+https://github.com/ANTsX/ANTsPyNet')
 import ants
 
 
@@ -20,12 +20,13 @@ import ants
 
 import ants
 
-
+import random
+from datetime import datetime
 # In[67]:
 
 
-from google.colab import drive
-drive.mount('/content/drive')
+# from google.colab import drive
+# drive.mount('/content/drive')
 
 
 # **overview**<br>
@@ -101,12 +102,6 @@ if len( arglist ) > 5:
 
 # In[70]:
 
-
-ofn = "dbpnn-nbp" + str(nbp) + '-ctmod' + str(ctmod) + "-patchscale" + str(patch_scale) +  "-vggfeat54.h5"
-if do22:
-    ofn = "dbpnn-nbp" + str(nbp) + '-ctmod' + str(ctmod) +"-patchscale" + str(patch_scale) +  "-vggfeat22_p3eq.h5"
-print( "network config: " + ofn, flush=True )
-print( "weight: " + str( featureWeight ), flush=True  )
 
 
 # standard imports for I/O, sampling and image manipulation
@@ -497,9 +492,13 @@ mdl = dbpn( (None,None,3),
 
 print("assemble images", flush=True )
 imgfns = glob.glob( "/content/drive/MyDrive/xray_images/*png")
+if len(imgfns) == 0:
+    imgfns = glob.glob( "/raid/data_BA/deep_perceptual_resampling/xrays/*png")
+if len(imgfns) == 0:
+    imgfns = glob.glob( "/Users/stnava/Downloads/images/*png")
 random.shuffle(imgfns)
 # 90\% training data
-n = round( len( imgfns ) * 0.7 )
+n = round( len( imgfns ) * 0.9 )
 imgfnsTrain = imgfns[0:n]      # just start small
 imgfnsTest = imgfns[(n+1):len(imgfns)]    # just a few test for now
 # get a reference image from the sample - we assume all are the same size
@@ -515,8 +514,8 @@ print( imgfns )
 img = ants.image_read( imgfnsTrain[0] )
 img2 = ants.image_read( imgfnsTrain[1] )
 patch1, patch2 = get_random_patch_pair( img, img2 )
-ants.plot(patch1)
-ants.plot(patch2)
+# ants.plot(patch1)
+# ants.plot(patch2)
 
 
 # get pre-trained network weights
@@ -527,17 +526,12 @@ ants.plot(patch2)
 ofn='/content/drive/MyDrive/dbpnn-nbp5-ctmod4-patchscaleTrue-vggfeat22_p3eq.h5'
 print( os.path.isfile(ofn) )
 print( ofn )
+if not os.path.isfile(ofn):
+    ofn='./models/dpr_v0.h5'
+
 if os.path.isfile(ofn):
     print( "load " + ofn )
     mdl = tf.keras.models.load_model( ofn, compile=False )
-
-
-# this is the experimental QC network - you may not have this in which case<br>
-# you would comment this code out and in the loss function as well - results<br>
-# will remain fairly similar.
-
-# qcmodelfn = "resnet_koniq10k_QC_ThreeChan_MS_HR_patch_GlobalScaleMAE512x512.h5"<br>
-# qcmodel = tf.keras.models.load_model( qcmodelfn, compile=False )
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
 
@@ -584,7 +578,7 @@ rmodelnn = tf.keras.Model(inputs=[myinput, mytarget], outputs=outputnn)
 
 
 if do_test:
-    mybs = 2 # FIXME may want to increase this for real training runs
+    mybs = 16 # FIXME may want to increase this for real training runs
     patchesOrigTe = np.zeros(shape=(mybs,psz,psz,3))
     patchesResamTe = np.zeros(shape=(mybs,psz,psz,3))
     for myb in range(mybs):
@@ -600,12 +594,14 @@ if do_test:
       rimg = tx0.apply_to_image( img )
       rimg = tx0inv.apply_to_image( rimg )
       img, rimg = get_random_patch_pair( img, rimg )
+      imgmin = img.min()
       if patch_scale:
-        img = img - img.min()
-        rimg = rimg - rimg.min()
-      if img.max() > 0 and rimg.max() > 0 :
-        img = img / img.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
-        rimg = rimg / rimg.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
+        img = img - imgmin
+        rimg = rimg - imgmin
+      imgmax = img.max()
+      if imgmax > 0 :
+        img = img / imgmax * offsetIntensity*2.0 - offsetIntensity # for VGG
+        rimg = rimg / imgmax * offsetIntensity*2.0 - offsetIntensity # for VGG
       for k in range(3):
         patchesOrigTe[myb,:,:,k] = img.numpy()
         patchesResamTe[myb,:,:,k] = rimg.numpy()
@@ -629,37 +625,32 @@ def my_generator( mybs , ntimesbatch = 16 ):
         for myn in range(ntimesbatch):
             patchesOrig = np.zeros(shape=(mybs,psz,psz,3))
             patchesResam = np.zeros(shape=(mybs,psz,psz,3))
+            imgfn = random.sample( imgfnsTrain, 1 )[0]
+            img = ants.image_read( imgfn )
+            img = img - img.min()
+            img = img / img.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
+            if img.components > 1:
+                img = ants.split_channels(img)[0]
+            rRotGenerator = ants.contrib.RandomRotate2D( ( 0, 50 ), reference=img )
+            tx0 = rRotGenerator.transform()
+            tx0inv = ants.invert_ants_transform(tx0)
+            rimg = tx0.apply_to_image( img )
+            rimg = tx0inv.apply_to_image( rimg )
             for myb in range(mybs):
-                imgfn = random.sample( imgfnsTrain, 1 )[0]
-                img = ants.image_read( imgfn )
-                img = img - img.min()
-                img = img / img.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
-                if img.components > 1:
-                    img = ants.split_channels(img)[0]
-                rRotGenerator = ants.contrib.RandomRotate2D( ( 0, 50 ), reference=img )
-                tx0 = rRotGenerator.transform()
-                tx0inv = ants.invert_ants_transform(tx0)
-                rimg = tx0.apply_to_image( img )
-                rimg = tx0inv.apply_to_image( rimg )
-                img, rimg = get_random_patch_pair( img, rimg )
+                imgp, rimgp = get_random_patch_pair( img, rimg )
                 if patch_scale:
-                    img = img - img.min()
-                    rimg = rimg - rimg.min()
-                    if img.max() > 0 and rimg.max() > 0 :
-                        img = img / img.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
-                        rimg = rimg / rimg.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
+                    imgp = imgp - imgp.min()
+                    rimgp = rimgp - rimgp.min()
+                    if imgp.max() > 0 and rimgp.max() > 0 :
+                        imgp = imgp / imgp.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
+                        rimgp = rimgp / rimgp.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
                 for k in range(3):
-                    patchesOrig[myb,:,:,k] = img.numpy()
-                    patchesResam[myb,:,:,k] = rimg.numpy()
+                    patchesOrig[myb,:,:,k] = imgp.numpy()
+                    patchesResam[myb,:,:,k] = rimgp.numpy()
             patchesOrig = tf.cast( patchesOrig, "float32")
             patchesResam = tf.cast( patchesResam, "float32")
             yield (patchesResam, patchesOrig)
 
-
-# In[95]:
-
-
-psz
 
 
 # instanstiate the generator function with a given sub-batch and total batch size<br>
@@ -680,7 +671,6 @@ mydatgen = my_generator( 32, 256 ) # FIXME for a real training run
 
 
 testit = next( mydatgen )
-
 
 # set up some parameters for tracking performance
 
@@ -830,11 +820,7 @@ comparisonimg = ants.from_numpy( np.concatenate(
  [ np.array(tf.squeeze(patchesUpTe[wh,:,:,1]).numpy()+ 127.5),
    np.array(tf.squeeze(patchesPred[wh,:,:,1]).numpy() + 127.5),
    np.array(tf.squeeze(patchesHiTe[wh,:,:,1]).numpy()+ 127.5) ], axis=0 ) )
-ants.plot( comparisonimg )
+# ants.plot( comparisonimg )
 
 
 # In[ ]:
-
-
-
-
