@@ -571,7 +571,8 @@ rmodelnn = tf.keras.Model(inputs=[myinput, mytarget], outputs=outputnn)
 # In[94]:
 
 
-def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz, patch_scaler=False ):
+def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
+    patch_scaler=False, verbose = False ):
     while True:
         for myn in range(nImages):
             patchesOrig = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,3))
@@ -580,7 +581,8 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz, 
                 imgfn = random.sample( imgfnsTrain, 1 )[0]
             else:
                 imgfn = random.sample( imgfnsTest, 1 )[0]
-            print(imgfn)
+            if verbose:
+                print(imgfn)
             img = ants.image_read( imgfn )
             if img.components > 1:
                 img = ants.split_channels(img)[0]
