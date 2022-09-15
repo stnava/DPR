@@ -78,7 +78,7 @@ do22=(arglist[2] == "True" ) | (arglist[2] == 1 )
 featureWeight = 200.0
 ctmod = 10
 mybs  = 1028
-patch_scale = True
+patch_scale = False
 if do22 == 1:
     featureWeight = 0.25
 
@@ -380,7 +380,7 @@ def get_random_patch( img, patchWidth=psz ):
 
 def get_random_patch_pair( img, img2, patchWidth=psz ):
     mystd = 0
-    while mystd == 0:
+    while mystd == 0 or mystd2 == 0:
         inds = get_random_base_ind()
         hinds = [None,None]
         for k in range(len(inds)):
@@ -388,6 +388,7 @@ def get_random_patch_pair( img, img2, patchWidth=psz ):
         myimg = ants.crop_indices( img, inds, hinds )
         myimg2 = ants.crop_indices( img2, inds, hinds )
         mystd = myimg.std()
+        mystd2 = myimg2.std()
     return myimg, myimg2
 
 
@@ -571,7 +572,7 @@ rmodelnn = tf.keras.Model(inputs=[myinput, mytarget], outputs=outputnn)
 # In[94]:
 
 
-def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz ):
+def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz, patch_scaler=False ):
     while True:
         for myn in range(nImages):
             patchesOrig = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,3))
@@ -580,9 +581,8 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz )
                 imgfn = random.sample( imgfnsTrain, 1 )[0]
             else:
                 imgfn = random.sample( imgfnsTest, 1 )[0]
-            img = ants.image_read( imgfn )
-            img = img - img.min()
-            img = img / img.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
+            img = ants.image_read( imgfn ).iMath("Normalize")
+            img = img * offsetIntensity*2.0 - offsetIntensity # for VGG
             if img.components > 1:
                 img = ants.split_channels(img)[0]
             rRotGenerator = ants.contrib.RandomRotate2D( ( -50, 50 ), reference=img )
@@ -592,8 +592,8 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz )
             rimg = tx0inv.apply_to_image( rimg )
             for myb in range(nPatches):
                 imgp, rimgp = get_random_patch_pair( img, rimg, target_patch_size )
-                imgpmin = imgp.max()
-                if patch_scale:
+                imgpmin = imgp.min()
+                if patch_scaler:
                     imgp = imgp - imgpmin
                     rimgp = rimgp - imgpmin
                     imgpmax = imgp.max()
@@ -738,10 +738,10 @@ print("ssim Test: " + str( ssimBi ) + " vs SR: " + str( ssimSR ), flush=True  )
 # In[ ]:
 
 
-patchesPred = mdl( patchesLoTe )
-squared_difference = tf.square(patchesPred - patchesHiTe)
+patchesPred = mdl( patchesResamTeTf )
+squared_difference = tf.square(patchesPred - patchesOrigTeTf)
 msqTerm = tf.reduce_mean(squared_difference )
-vggTerm = tf.reduce_mean(tf.square(myfeatmodel22(patchesHiTe)-myfeatmodel22(patchesPred)))
+vggTerm = tf.reduce_mean(tf.square(myfeatmodel22(patchesOrigTeTf)-myfeatmodel22(patchesPred)))
 # qcTerm = tf.reduce_mean( tf.square( qcmodel( patchesPred/127.5 ) - qcmodel( patchesHiTe/127.5 ) ), axis=[0])
 tvTerm = tf.reduce_mean( tf.image.total_variation( patchesPred ) )
 print( msqTerm )
