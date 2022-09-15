@@ -468,12 +468,12 @@ def my_loss_54(y_true, y_pred):
 
 mdl = dbpn( (None,None,3),
   number_of_outputs=3,
-  number_of_base_filters=64,
-  number_of_feature_filters=256,
+  number_of_base_filters=32,
+  number_of_feature_filters=128,
   number_of_back_projection_stages=nbp,
-  convolution_kernel_size=(6, 6),
+  convolution_kernel_size=(3, 3),
   strides=(1, 1),
-  last_convolution=(3, 3), number_of_loss_functions=1, interpolation='nearest')
+  last_convolution=(1, 1), number_of_loss_functions=1, interpolation='nearest')
 
 
 # collect all the images you have locally
@@ -514,7 +514,7 @@ patch1, patch2 = get_random_patch_pair( img, img2 )
 # In[92]:
 
 
-ofn='./models/dpr_v0.2.h5'
+ofn='./models/dpr_v0.3.h5'
 
 if os.path.isfile(ofn):
     print( "load " + ofn )
@@ -707,7 +707,7 @@ if imgt.components > 1:
     imgt = ants.split_channels(imgt)[0]
 
 img1 = ants.image_read( ants.get_data("r16" ) )
-img2 = ants.image_read( ants.get_data("r27" ) )
+img2 = ants.image_read( ants.get_data("r64" ) )
 reg = ants.registration( img2, img1, 'SyN' )
 rimg = ants.apply_transforms( img2, img1, reg['fwdtransforms'] )
 rimg = ants.apply_transforms( img1, rimg, reg['invtransforms'] )
