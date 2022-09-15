@@ -514,11 +514,7 @@ patch1, patch2 = get_random_patch_pair( img, img2 )
 # In[92]:
 
 
-ofn='/content/drive/MyDrive/dbpnn-nbp5-ctmod4-patchscaleTrue-vggfeat22_p3eq.h5'
-print( os.path.isfile(ofn) )
-print( ofn )
-if not os.path.isfile(ofn):
-    ofn='./models/dpr_v0.1.h5'
+ofn='./models/dpr_v0.2.h5'
 
 if os.path.isfile(ofn):
     print( "load " + ofn )
@@ -656,7 +652,7 @@ print( "begin training", flush=True  )
 
 
 # In[ ]:
-
+derka
 for myrs in range( 1000 ):
     wtsLast = mdl.get_weights()
     tracker = mdl.fit( mydatgen,  epochs=1, steps_per_epoch=1, verbose=0,
@@ -698,49 +694,28 @@ ants.image_write( orig_patch, '/tmp/temp2.nii.gz'  )
 
 # **helper examples**<br>
 # below, full image inference code - just an example of one way to apply the learned model
-
-# In[ ]:
-
-
 imgfnt = random.sample( imgfnsTest, 1 )[0]
 imgt = ants.image_read( imgfnt )
 if imgt.components > 1:
     imgt = ants.split_channels(imgt)[0]
-
-
-# In[ ]:
-
-
 outdim = (512,512)
 imgl = ants.resample_image( imgt, outdim, use_voxels=True, interp_type=1)
-
-
-# In[ ]:
-
-
-imglm = ants.merge_channels( [imgl,imgl,imgl])
+exp_field = ants.simulate_displacement_field(imgl, field_type="exponential")
+bsp_field = ants.simulate_displacement_field(imgl, field_type="bspline")
+bsp_xfrm = ants.transform_from_displacement_field(bsp_field * 3)
+domain_warped = ants.apply_ants_transform_to_image(bsp_xfrm, imgl, imgl)
+ants.image_write( domain_warped, '/tmp/temp.nii.gz' )
+imglm = ants.merge_channels( [domain_warped,domain_warped,domain_warped])
 sro = antspynet.apply_super_resolution_model_to_image( imglm,
-  tf.keras.models.load_model( ofn, compile=False ) )
+  tf.keras.models.load_model( ofn, compile=False ),regression_order=4 )
 srs = ants.split_channels( sro )
 sr = ( srs[0]+srs[1]+srs[2] ) * 1.0/3.0
-
-
-# In[ ]:
-
-
-sro = ants.copy_image_info( imgt, sro )
-sr = ants.copy_image_info( imgt, sr )
-imgu = ants.resample_image( imgl, imgt.shape, use_voxels=True, interp_type=1)
-
-
+sr = ants.copy_image_info( domain_warped, sr )
+ants.image_write( domain_warped, '/tmp/tempW.nii.gz' )
+ants.image_write( sr, '/tmp/tempDPR.nii.gz' )
 # some metrics on the output
-
-# In[ ]:
-
-
-gmsdSR = antspynet.gmsd(imgt,sr)
-gmsdBi = antspynet.gmsd(imgt,imgu)
-ssimSR = antspynet.ssim(imgt,sr)
+gmsdSR = antspynet.gmsd(imgl,sr)
+ssimSR = antspynet.ssim(imgl,sr)
 ssimBi = antspynet.ssim(imgt,imgu)
 psnrSR = antspynet.psnr(imgt,sr)
 psnrBi = antspynet.psnr(imgt,imgu)
@@ -777,11 +752,12 @@ print( tvTerm * 1e-4 )
 
 
 wh=1 # 129
+pp = mdl.predict( patchesResamTeTf, batch_size = 1 )
 comparisonimg = ants.from_numpy( np.concatenate(
- [ np.array(tf.squeeze(patchesUpTe[wh,:,:,1]).numpy()+ 127.5),
-   np.array(tf.squeeze(patchesPred[wh,:,:,1]).numpy() + 127.5),
-   np.array(tf.squeeze(patchesHiTe[wh,:,:,1]).numpy()+ 127.5) ], axis=0 ) )
-# ants.plot( comparisonimg )
+ [ np.array(tf.squeeze(patchesResamTeTf[wh,:,:,1]).numpy()+ 127.5),
+   np.array(tf.squeeze(pp[wh,:,:,1]).numpy() + 127.5),
+   np.array(tf.squeeze(patchesOrigTeTf[wh,:,:,1]).numpy()+ 127.5) ], axis=0 ) )
+ants.plot( comparisonimg )
 
 
 # In[ ]:
