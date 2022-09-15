@@ -391,9 +391,8 @@ def get_random_patch_pair( img, img2, patchWidth=psz ):
         mystd = myimg.std()
         mystd2 = myimg2.std()
         ct = ct + 1
-        if ( ct == 10 and mystd2 == 0 ):
-            mystd2 = mystd
-            myimg2 = myimg
+        if ( ct > 20 ):
+            return myimg, myimg2
     return myimg, myimg2
 
 
