@@ -586,7 +586,7 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
             img = ants.image_read( imgfn )
             if img.components > 1:
                 img = ants.split_channels(img)[0]
-            img = ants.iMath("Normalize")
+            img = ants.iMath(img, "Normalize")
             ants.set_origin( img, ants.get_center_of_mass(img) )
             img = img * offsetIntensity*2.0 - offsetIntensity # for VGG
             rRotGenerator = ants.contrib.RandomRotate2D( ( -30, 30 ), reference=img )
