@@ -19,7 +19,7 @@ seg = ants.threshold_image( image, 'Otsu', 3 )
 mdlfn='models/CSRS.R.TV.D.Res6.h5'
 
 # make some transforms
-rRotGenerator = ants.contrib.RandomRotate3D( ( 0, 50 ), reference=image )
+rRotGenerator = ants.contrib.RandomRotate3D( ( -2, 2 ), reference=image )
 tx0 = rRotGenerator.transform()
 tx0inv = ants.invert_ants_transform(tx0)
 
@@ -33,8 +33,11 @@ ssr = antspyt1w.label_and_img_to_sr(
 rimg = tx0.apply_to_image( ssr['super_resolution'] )
 rimgrSR1 = tx0inv.apply_to_image( rimg )
 dprimgSR1 = ants.resample_image_to_target( rimgrSR1, image, interp_type='nearestNeighbor' )
-dprsnr1 = antspynet.psnr(image, dprimgSR1 )
-dprssim1 = antspynet.ssim(image, dprimgSR1 )
+def dp( x ):
+    return ants.pad_image( x, pad_width=(-8,-8,-8 ) )
+
+dprsnr1 = antspynet.psnr( dp(image), dp(dprimgSR1 ))
+dprssim1 = antspynet.ssim(dp(image), dp(dprimgSR1 ))
 
 
 # do SR last
@@ -48,12 +51,12 @@ ssr2 = antspyt1w.label_and_img_to_sr(
             return_intensity=True )
 rimgrSR2 = ssr2['super_resolution']
 dprimgSR2 = ants.resample_image_to_target( rimgrSR2, image, interp_type='nearestNeighbor' )
-dprsnr2 = antspynet.psnr(image, dprimgSR2 )
-dprssim2 = antspynet.ssim(image, dprimgSR2 )
+dprsnr2 = antspynet.psnr(dp(image), dp(dprimgSR2 ))
+dprssim2 = antspynet.ssim(dp(image), dp(dprimgSR2 ))
 
 # dont do any SR
-dprsnr3 = antspynet.psnr(image, rimgr )
-dprssim3 = antspynet.ssim(image, rimgr )
+dprsnr3 = antspynet.psnr(dp(image), dp(rimgr ))
+dprssim3 = antspynet.ssim(dp(image), dp(rimgr ))
 
 ants.image_write( image, '/tmp/ground_truth.nii.gz')
 ants.image_write( rimgr, '/tmp/rimgr.nii.gz')
