@@ -592,12 +592,17 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz )
             rimg = tx0inv.apply_to_image( rimg )
             for myb in range(nPatches):
                 imgp, rimgp = get_random_patch_pair( img, rimg, target_patch_size )
+                imgpmin = imgp.max()
                 if patch_scale:
-                    imgp = imgp - imgp.min()
-                    rimgp = rimgp - rimgp.min()
-                    if imgp.max() > 0 and rimgp.max() > 0 :
-                        imgp = imgp / imgp.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
-                        rimgp = rimgp / rimgp.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
+                    imgp = imgp - imgpmin
+                    rimgp = rimgp - imgpmin
+                    imgpmax = imgp.max()
+                    if imgpmax > 0 :
+                        imgp = imgp / imgpmax * offsetIntensity*2.0 - offsetIntensity # for VGG
+                        rimgp = rimgp / imgpmax * offsetIntensity*2.0 - offsetIntensity # for VGG
+                coinflip = numpy.random.choice([True,False], size=1)[0]
+                if coinflip :
+                    rimpg = imgp
                 for k in range(3):
                     patchesOrig[myb,:,:,k] = imgp.numpy()
                     patchesResam[myb,:,:,k] = rimgp.numpy()
@@ -677,14 +682,14 @@ for myrs in range( 1000 ):
 
 # In[109]:
 
-
+mdl  = tf.keras.models.load_model( ofn, compile=False )
 pp = mdl.predict( patchesOrigTeTf, batch_size = 1 )
 pp = mdl.predict( patchesResamTeTf, batch_size = 1 )
 tf.reduce_mean( tf.image.psnr( patchesResamTeTf + offsetIntensity, patchesOrigTeTf+offsetIntensity, 255))
 tf.reduce_mean( tf.image.ssim( patchesResamTeTf + offsetIntensity, patchesOrigTeTf+offsetIntensity, 255))
 tf.reduce_mean( tf.image.psnr( pp + offsetIntensity, patchesOrigTeTf+offsetIntensity, 255))
 tf.reduce_mean( tf.image.ssim( pp + offsetIntensity, patchesOrigTeTf+offsetIntensity, 255) )
-i=2
+i=0
 resam_patch = ants.from_numpy( patchesResamTeTf[i,:,:,1].numpy() )
 dpr_patch = ants.from_numpy( pp[i,:,:,1] )
 orig_patch = ants.from_numpy( patchesOrigTeTf[i,:,:,1].numpy() )
@@ -698,16 +703,19 @@ imgfnt = random.sample( imgfnsTest, 1 )[0]
 imgt = ants.image_read( imgfnt )
 if imgt.components > 1:
     imgt = ants.split_channels(imgt)[0]
+
 outdim = (512,512)
 imgl = ants.resample_image( imgt, outdim, use_voxels=True, interp_type=1)
+imgl = ants.image_read( ants.get_data("r16" ) )
 exp_field = ants.simulate_displacement_field(imgl, field_type="exponential")
 bsp_field = ants.simulate_displacement_field(imgl, field_type="bspline")
 bsp_xfrm = ants.transform_from_displacement_field(bsp_field * 3)
 domain_warped = ants.apply_ants_transform_to_image(bsp_xfrm, imgl, imgl)
+antspynet.psnr(domain_warped,imgl)
 ants.image_write( domain_warped, '/tmp/temp.nii.gz' )
 imglm = ants.merge_channels( [domain_warped,domain_warped,domain_warped])
 sro = antspynet.apply_super_resolution_model_to_image( imglm,
-  tf.keras.models.load_model( ofn, compile=False ),regression_order=4 )
+  tf.keras.models.load_model( ofn, compile=False ),regression_order=None )
 srs = ants.split_channels( sro )
 sr = ( srs[0]+srs[1]+srs[2] ) * 1.0/3.0
 sr = ants.copy_image_info( domain_warped, sr )
