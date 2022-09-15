@@ -9,6 +9,7 @@
 #!/usr/bin/python3
 import os.path
 from os import path
+import numpy as np
 # !pip uninstall antspyx
 # get_ipython().system('pip install antspyx')
 # get_ipython().system('pip install git+https://github.com/ANTsX/ANTsPyNet')
@@ -600,7 +601,7 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz )
                     if imgpmax > 0 :
                         imgp = imgp / imgpmax * offsetIntensity*2.0 - offsetIntensity # for VGG
                         rimgp = rimgp / imgpmax * offsetIntensity*2.0 - offsetIntensity # for VGG
-                coinflip = numpy.random.choice([True,False], size=1)[0]
+                coinflip = np.random.choice([True,False], size=1)[0]
                 if coinflip :
                     rimpg = imgp
                 for k in range(3):
