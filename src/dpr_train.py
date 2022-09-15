@@ -348,10 +348,7 @@ def dbpn(input_image_size,
 
 
 st = 96
-psz = 32
-# we are doing 2x SR so low-res size is just 48
-lsz = int(psz/2)
-
+psz = 96
 
 # generate a random corner index for a patch
 
@@ -582,11 +579,11 @@ rmodelnn = tf.keras.Model(inputs=[myinput, mytarget], outputs=outputnn)
 # In[94]:
 
 
-def my_generator( nPatches , nImages = 16, istest=False ):
+def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz ):
     while True:
         for myn in range(nImages):
-            patchesOrig = np.zeros(shape=(nPatches,psz,psz,3))
-            patchesResam = np.zeros(shape=(nPatches,psz,psz,3))
+            patchesOrig = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,3))
+            patchesResam = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,3))
             if not istest:
                 imgfn = random.sample( imgfnsTrain, 1 )[0]
             else:
@@ -596,13 +593,13 @@ def my_generator( nPatches , nImages = 16, istest=False ):
             img = img / img.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
             if img.components > 1:
                 img = ants.split_channels(img)[0]
-            rRotGenerator = ants.contrib.RandomRotate2D( ( 0, 50 ), reference=img )
+            rRotGenerator = ants.contrib.RandomRotate2D( ( -50, 50 ), reference=img )
             tx0 = rRotGenerator.transform()
             tx0inv = ants.invert_ants_transform(tx0)
             rimg = tx0.apply_to_image( img )
             rimg = tx0inv.apply_to_image( rimg )
             for myb in range(nPatches):
-                imgp, rimgp = get_random_patch_pair( img, rimg )
+                imgp, rimgp = get_random_patch_pair( img, rimg, target_patch_size )
                 if patch_scale:
                     imgp = imgp - imgp.min()
                     rimgp = rimgp - rimgp.min()
@@ -627,14 +624,7 @@ def my_generator( nPatches , nImages = 16, istest=False ):
 
 
 mydatgen = my_generator( 32, 256, istest=False ) # FIXME for a real training run
-mydatgenTest = my_generator( 4, 16, istest=True ) # FIXME for a real training run
-
-
-# to test the generator
-
-# In[97]:
-
-
+mydatgenTest = my_generator( 4, 16, istest=True, target_patch_size=96 ) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf = next( mydatgenTest )
 
 # set up some parameters for tracking performance
@@ -671,7 +661,6 @@ print( "begin training", flush=True  )
 
 # In[ ]:
 
-
 for myrs in range( 1000 ):
     wtsLast = mdl.get_weights()
     tracker = mdl.fit( mydatgen,  epochs=1, steps_per_epoch=1, verbose=0,
@@ -697,8 +686,19 @@ for myrs in range( 1000 ):
 # In[109]:
 
 
-tf.image.psnr( pp + offsetIntensity, patchesOrigTeTf+offsetIntensity, 255)
-
+pp = mdl.predict( patchesOrigTeTf, batch_size = 1 )
+pp = mdl.predict( patchesResamTeTf, batch_size = 1 )
+tf.reduce_mean( tf.image.psnr( patchesResamTeTf + offsetIntensity, patchesOrigTeTf+offsetIntensity, 255))
+tf.reduce_mean( tf.image.ssim( patchesResamTeTf + offsetIntensity, patchesOrigTeTf+offsetIntensity, 255))
+tf.reduce_mean( tf.image.psnr( pp + offsetIntensity, patchesOrigTeTf+offsetIntensity, 255))
+tf.reduce_mean( tf.image.ssim( pp + offsetIntensity, patchesOrigTeTf+offsetIntensity, 255) )
+i=2
+resam_patch = ants.from_numpy( patchesResamTeTf[i,:,:,1].numpy() )
+dpr_patch = ants.from_numpy( pp[i,:,:,1] )
+orig_patch = ants.from_numpy( patchesOrigTeTf[i,:,:,1].numpy() )
+ants.image_write( resam_patch, '/tmp/temp.nii.gz' )
+ants.image_write( dpr_patch, '/tmp/temp1.nii.gz' )
+ants.image_write( orig_patch, '/tmp/temp2.nii.gz'  )
 
 # **helper examples**<br>
 # below, full image inference code - just an example of one way to apply the learned model
