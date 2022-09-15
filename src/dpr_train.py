@@ -424,10 +424,10 @@ myfeatmodel22 = tf.keras.Model( inputs=myvgg.inputs, outputs=myvgg.layers[5].out
 
 
 def my_loss_22(y_true, y_pred,
-  msqwt = tf.constant( 2.0 ),
+  msqwt = tf.constant( 200.0 ),
   qcWeight = tf.constant([50.0,5.0]),
   fw=tf.constant(0.02),
-  tvwt = tf.constant( 1.0e-4 ) ):
+  tvwt = tf.constant( 1.0e-8 ) ):
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3]
     msqTerm = tf.reduce_mean(squared_difference, axis=myax)
@@ -703,19 +703,18 @@ if imgt.components > 1:
     imgt = ants.split_channels(imgt)[0]
 
 img1 = ants.image_read( ants.get_data("r16" ) )
-img2 = ants.image_read( ants.get_data("r64" ) )
-reg = ants.registration( img2, img1, 'Affine' )
+img2 = ants.image_read( ants.get_data("r27" ) )
+reg = ants.registration( img2, img1, 'SyN' )
 rimg = ants.apply_transforms( img2, img1, reg['fwdtransforms'] )
 rimg = ants.apply_transforms( img1, rimg, reg['invtransforms'] )
 antspynet.psnr(img1,rimg)
-ants.image_write( rimg, '/tmp/temp.nii.gz' )
+ants.image_write( rimg, '/tmp/tempRR.nii.gz' )
 imglm = ants.merge_channels( [rimg,rimg,rimg])
 sro = antspynet.apply_super_resolution_model_to_image( imglm,
   tf.keras.models.load_model( ofn, compile=False ),regression_order=None )
 srs = ants.split_channels( sro )
 sr = ( srs[0]+srs[1]+srs[2] ) * 1.0/3.0
 sr = ants.copy_image_info( img1, sr )
-ants.image_write( rimg, '/tmp/tempW.nii.gz' )
 ants.image_write( sr, '/tmp/tempDPR.nii.gz' )
 # some metrics on the output
 gmsdSR = antspynet.gmsd(img1,sr)
