@@ -514,7 +514,7 @@ patch1, patch2 = get_random_patch_pair( img, img2 )
 # In[92]:
 
 
-ofn='./models/dpr_v0.3.h5'
+ofn='./models/dpr_v0.2.h5'
 
 if os.path.isfile(ofn):
     print( "load " + ofn )
