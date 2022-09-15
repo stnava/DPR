@@ -621,7 +621,7 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz )
 
 
 mydatgen = my_generator( 8, 32, istest=False ) # FIXME for a real training run
-mydatgenTest = my_generator( 4, 16, istest=True, target_patch_size=96 ) # FIXME for a real training run
+mydatgenTest = my_generator( 8, 64, istest=True, target_patch_size=96 ) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf = next( mydatgenTest )
 
 # set up some parameters for tracking performance
