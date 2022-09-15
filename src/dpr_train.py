@@ -340,12 +340,6 @@ def dbpn(input_image_size,
     return deep_back_projection_network_model
 
 
-# will build testing data on the fly
-
-# In[75]:
-
-
-do_test = True
 
 
 # set up strides and patch sizes - **these could also be explored empirically**
@@ -577,38 +571,6 @@ rmodelnn = tf.keras.Model(inputs=[myinput, mytarget], outputs=outputnn)
 # In[93]:
 
 
-if do_test:
-    mybs = 16 # FIXME may want to increase this for real training runs
-    patchesOrigTe = np.zeros(shape=(mybs,psz,psz,3))
-    patchesResamTe = np.zeros(shape=(mybs,psz,psz,3))
-    for myb in range(mybs):
-      imgfn = random.sample( imgfnsTest, 1 )[0]
-      img = ants.image_read( imgfn )
-      img = img - img.min()
-      img = img / img.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
-      if img.components > 1:
-        img = ants.split_channels(img)[0]
-      rRotGenerator = ants.contrib.RandomRotate2D( ( 0, 50 ), reference=img )
-      tx0 = rRotGenerator.transform()
-      tx0inv = ants.invert_ants_transform(tx0)
-      rimg = tx0.apply_to_image( img )
-      rimg = tx0inv.apply_to_image( rimg )
-      img, rimg = get_random_patch_pair( img, rimg )
-      imgmin = img.min()
-      if patch_scale:
-        img = img - imgmin
-        rimg = rimg - imgmin
-      imgmax = img.max()
-      if imgmax > 0 :
-        img = img / imgmax * offsetIntensity*2.0 - offsetIntensity # for VGG
-        rimg = rimg / imgmax * offsetIntensity*2.0 - offsetIntensity # for VGG
-      for k in range(3):
-        patchesOrigTe[myb,:,:,k] = img.numpy()
-        patchesResamTe[myb,:,:,k] = rimg.numpy()
-      patchesOrigTeTf = tf.cast( patchesOrigTe, "float32")
-      patchesResamTeTf = tf.cast( patchesResamTe, "float32")
-
-
 # **data generation**<br>
 # recent versions of tensorflow/keras allow data generators to be passed<br>
 # directly to the fit function.  underneath, this does a fairly efficient split<br>
@@ -620,12 +582,15 @@ if do_test:
 # In[94]:
 
 
-def my_generator( mybs , ntimesbatch = 16 ):
+def my_generator( nPatches , nImages = 16, istest=False ):
     while True:
-        for myn in range(ntimesbatch):
-            patchesOrig = np.zeros(shape=(mybs,psz,psz,3))
-            patchesResam = np.zeros(shape=(mybs,psz,psz,3))
-            imgfn = random.sample( imgfnsTrain, 1 )[0]
+        for myn in range(nImages):
+            patchesOrig = np.zeros(shape=(nPatches,psz,psz,3))
+            patchesResam = np.zeros(shape=(nPatches,psz,psz,3))
+            if not istest:
+                imgfn = random.sample( imgfnsTrain, 1 )[0]
+            else:
+                imgfn = random.sample( imgfnsTest, 1 )[0]
             img = ants.image_read( imgfn )
             img = img - img.min()
             img = img / img.max() * offsetIntensity*2.0 - offsetIntensity # for VGG
@@ -636,7 +601,7 @@ def my_generator( mybs , ntimesbatch = 16 ):
             tx0inv = ants.invert_ants_transform(tx0)
             rimg = tx0.apply_to_image( img )
             rimg = tx0inv.apply_to_image( rimg )
-            for myb in range(mybs):
+            for myb in range(nPatches):
                 imgp, rimgp = get_random_patch_pair( img, rimg )
                 if patch_scale:
                     imgp = imgp - imgp.min()
@@ -661,8 +626,8 @@ def my_generator( mybs , ntimesbatch = 16 ):
 # In[113]:
 
 
-mydatgen = my_generator( 32, 256 ) # FIXME for a real training run
-# mydatgen = my_generator( 4, 16 ) # FIXME for testing
+mydatgen = my_generator( 32, 256, istest=False ) # FIXME for a real training run
+mydatgenTest = my_generator( 4, 16, istest=True ) # FIXME for a real training run
 
 
 # to test the generator
@@ -670,7 +635,7 @@ mydatgen = my_generator( 32, 256 ) # FIXME for a real training run
 # In[97]:
 
 
-testit = next( mydatgen )
+patchesResamTeTf, patchesOrigTeTf = next( mydatgenTest )
 
 # set up some parameters for tracking performance
 
