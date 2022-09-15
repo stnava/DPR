@@ -426,9 +426,8 @@ myfeatmodel22 = tf.keras.Model( inputs=myvgg.inputs, outputs=myvgg.layers[5].out
 
 def my_loss_22(y_true, y_pred,
   msqwt = tf.constant( 1.0 ),
-  qcWeight = tf.constant([50.0,5.0]),
-  fw=tf.constant(5e-8),
-  tvwt = tf.constant( 1.0e-8 ) ):
+  fw=tf.constant(0.05),
+  tvwt = tf.constant( 1.0e-4 ) ):
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3]
     msqTerm = tf.reduce_mean(squared_difference, axis=myax)
@@ -436,11 +435,7 @@ def my_loss_22(y_true, y_pred,
     temp2 = myfeatmodel22(y_pred)
     vggsquared_difference = tf.square(temp1-temp2)
     vggTerm = tf.reduce_mean(vggsquared_difference, axis=myax)
-    # an additional two-term loss based on NIMA
-#    qcTerm = tf.reduce_mean( tf.square( qcmodel( y_pred/127.5 ) - qcmodel( y_true/127.5 ) ), axis=[1]  )
-#    qcTerm = qcTerm[0] * qcWeight[0] + qcTerm[1] * qcWeight[1]
     tvTerm = tf.reduce_mean( tf.image.total_variation( y_pred ) ) * tvwt
-#    return ( msqTerm * msqwt + vggTerm * fw + qcTerm + tvTerm )
     return ( msqTerm * msqwt + vggTerm * fw + tvTerm )
 
 
