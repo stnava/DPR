@@ -516,9 +516,9 @@ patch1, patch2 = get_random_patch_pair( img, img2 )
 
 ofn='./models/dpr_v0.2.h5'
 
-if os.path.isfile(ofn):
-    print( "load " + ofn )
-    mdl = tf.keras.models.load_model( ofn, compile=False )
+# if os.path.isfile(ofn):
+#    print( "load " + ofn )
+#    mdl = tf.keras.models.load_model( ofn, compile=False )
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
 ct = 0
@@ -656,8 +656,6 @@ print( "begin training", flush=True  )
 # mdl(patchesResamTeTf ).shape
 
 
-# In[ ]:
-derka
 for myrs in range( 1000 ):
     wtsLast = mdl.get_weights()
     tracker = mdl.fit( mydatgen,  epochs=1, steps_per_epoch=1, verbose=0,
