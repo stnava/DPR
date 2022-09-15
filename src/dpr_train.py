@@ -380,6 +380,7 @@ def get_random_patch( img, patchWidth=psz ):
 
 def get_random_patch_pair( img, img2, patchWidth=psz ):
     mystd = mystd2 = 0
+    ct = 0
     while mystd == 0 or mystd2 == 0:
         inds = get_random_base_ind()
         hinds = [None,None]
@@ -389,7 +390,10 @@ def get_random_patch_pair( img, img2, patchWidth=psz ):
         myimg2 = ants.crop_indices( img2, inds, hinds )
         mystd = myimg.std()
         mystd2 = myimg2.std()
-        print( str(mystd) + " " + str(mystd2))
+        ct = ct + 1
+        if ( ct == 10 and mystd2 == 0 ):
+            mystd2 = mystd
+            myimg2 = myimg
     return myimg, myimg2
 
 
