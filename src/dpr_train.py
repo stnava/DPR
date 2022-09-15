@@ -379,7 +379,7 @@ def get_random_patch( img, patchWidth=psz ):
     return myimg
 
 def get_random_patch_pair( img, img2, patchWidth=psz ):
-    mystd = 0
+    mystd = mystd2 = 0
     while mystd == 0 or mystd2 == 0:
         inds = get_random_base_ind()
         hinds = [None,None]
@@ -389,6 +389,7 @@ def get_random_patch_pair( img, img2, patchWidth=psz ):
         myimg2 = ants.crop_indices( img2, inds, hinds )
         mystd = myimg.std()
         mystd2 = myimg2.std()
+        print( str(mystd) + " " + str(mystd2))
     return myimg, myimg2
 
 
@@ -577,10 +578,11 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz, 
             else:
                 imgfn = random.sample( imgfnsTest, 1 )[0]
             img = ants.image_read( imgfn ).iMath("Normalize")
+            ants.set_origin( img, ants.get_center_of_mass(img) )
             img = img * offsetIntensity*2.0 - offsetIntensity # for VGG
             if img.components > 1:
                 img = ants.split_channels(img)[0]
-            rRotGenerator = ants.contrib.RandomRotate2D( ( -50, 50 ), reference=img )
+            rRotGenerator = ants.contrib.RandomRotate2D( ( -30, 30 ), reference=img )
             tx0 = rRotGenerator.transform()
             tx0inv = ants.invert_ants_transform(tx0)
             rimg = tx0.apply_to_image( img )
@@ -617,7 +619,7 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz, 
 
 mydatgen = my_generator( 8, 32, istest=False ) # FIXME for a real training run
 mydatgenTest = my_generator( 8, 64, istest=True, target_patch_size=96 ) # FIXME for a real training run
-patchesResamTeTf, patchesOrigTeTf = next( mydatgenTest )
+patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
 
 # set up some parameters for tracking performance
 
