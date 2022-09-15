@@ -424,9 +424,9 @@ myfeatmodel22 = tf.keras.Model( inputs=myvgg.inputs, outputs=myvgg.layers[5].out
 
 
 def my_loss_22(y_true, y_pred,
-  msqwt = tf.constant( 200.0 ),
+  msqwt = tf.constant( 1.0 ),
   qcWeight = tf.constant([50.0,5.0]),
-  fw=tf.constant(0.02),
+  fw=tf.constant(5e-8),
   tvwt = tf.constant( 1.0e-8 ) ):
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3]
