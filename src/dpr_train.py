@@ -424,7 +424,7 @@ myfeatmodel22 = tf.keras.Model( inputs=myvgg.inputs, outputs=myvgg.layers[5].out
 
 
 def my_loss_22(y_true, y_pred,
-  msqwt = tf.constant( 0.5 ),
+  msqwt = tf.constant( 2.0 ),
   qcWeight = tf.constant([50.0,5.0]),
   fw=tf.constant(0.02),
   tvwt = tf.constant( 1.0e-4 ) ):
@@ -702,29 +702,28 @@ imgt = ants.image_read( imgfnt )
 if imgt.components > 1:
     imgt = ants.split_channels(imgt)[0]
 
-outdim = (512,512)
-imgl = ants.resample_image( imgt, outdim, use_voxels=True, interp_type=1)
-imgl = ants.image_read( ants.get_data("r16" ) )
-exp_field = ants.simulate_displacement_field(imgl, field_type="exponential")
-bsp_field = ants.simulate_displacement_field(imgl, field_type="bspline")
-bsp_xfrm = ants.transform_from_displacement_field(bsp_field * 3)
-domain_warped = ants.apply_ants_transform_to_image(bsp_xfrm, imgl, imgl)
-antspynet.psnr(domain_warped,imgl)
-ants.image_write( domain_warped, '/tmp/temp.nii.gz' )
-imglm = ants.merge_channels( [domain_warped,domain_warped,domain_warped])
+img1 = ants.image_read( ants.get_data("r16" ) )
+img2 = ants.image_read( ants.get_data("r64" ) )
+reg = ants.registration( img2, img1, 'Affine' )
+rimg = ants.apply_transforms( img2, img1, reg['fwdtransforms'] )
+rimg = ants.apply_transforms( img1, rimg, reg['invtransforms'] )
+antspynet.psnr(img1,rimg)
+ants.image_write( rimg, '/tmp/temp.nii.gz' )
+imglm = ants.merge_channels( [rimg,rimg,rimg])
 sro = antspynet.apply_super_resolution_model_to_image( imglm,
   tf.keras.models.load_model( ofn, compile=False ),regression_order=None )
 srs = ants.split_channels( sro )
 sr = ( srs[0]+srs[1]+srs[2] ) * 1.0/3.0
-sr = ants.copy_image_info( domain_warped, sr )
-ants.image_write( domain_warped, '/tmp/tempW.nii.gz' )
+sr = ants.copy_image_info( img1, sr )
+ants.image_write( rimg, '/tmp/tempW.nii.gz' )
 ants.image_write( sr, '/tmp/tempDPR.nii.gz' )
 # some metrics on the output
-gmsdSR = antspynet.gmsd(imgl,sr)
-ssimSR = antspynet.ssim(imgl,sr)
-ssimBi = antspynet.ssim(imgt,imgu)
-psnrSR = antspynet.psnr(imgt,sr)
-psnrBi = antspynet.psnr(imgt,imgu)
+gmsdSR = antspynet.gmsd(img1,sr)
+gmsdBi = antspynet.gmsd(img1,rimg)
+ssimSR = antspynet.ssim(img1,sr)
+ssimBi = antspynet.ssim(img1,rimg)
+psnrSR = antspynet.psnr(img1,sr)
+psnrBi = antspynet.psnr(img1,rimg)
 print("PSNR Test: " + str( psnrBi ) + " vs SR: " + str( psnrSR ), flush=True  )
 print("GMSD Test: " + str( gmsdBi ) + " vs SR: " + str( gmsdSR ), flush=True  )
 print("ssim Test: " + str( ssimBi ) + " vs SR: " + str( ssimSR ), flush=True  )
