@@ -430,7 +430,7 @@ myfeatmodel22 = tf.keras.Model( inputs=myvgg.inputs, outputs=myvgg.layers[5].out
 
 def my_loss_22(y_true, y_pred,
   msqwt = tf.constant( 1.0 ),
-  fw=tf.constant(0.5),
+  fw=tf.constant(2.0),
   tvwt = tf.constant( 1.0e-4 ) ):
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3]
