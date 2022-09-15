@@ -430,7 +430,7 @@ myfeatmodel22 = tf.keras.Model( inputs=myvgg.inputs, outputs=myvgg.layers[5].out
 
 def my_loss_22(y_true, y_pred,
   msqwt = tf.constant( 1.0 ),
-  fw=tf.constant(0.05),
+  fw=tf.constant(0.5),
   tvwt = tf.constant( 1.0e-4 ) ):
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3]
@@ -522,7 +522,7 @@ if os.path.isfile(ofn):
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
 ct = 0
-opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
+opt = tf.keras.optimizers.Adam(learning_rate=1e-5)
 
 
 # model compilation
@@ -749,7 +749,7 @@ vggTerm = tf.reduce_mean(tf.square(myfeatmodel22(patchesOrigTeTf)-myfeatmodel22(
 # qcTerm = tf.reduce_mean( tf.square( qcmodel( patchesPred/127.5 ) - qcmodel( patchesHiTe/127.5 ) ), axis=[0])
 tvTerm = tf.reduce_mean( tf.image.total_variation( patchesPred ) )
 print( msqTerm )
-print( vggTerm * 0.02 )
+print( vggTerm * 0.1 )
 # print( qcTerm * [50.0,0.5] )
 print( tvTerm * 1e-4 )
 
