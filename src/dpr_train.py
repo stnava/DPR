@@ -518,7 +518,7 @@ ofn='/content/drive/MyDrive/dbpnn-nbp5-ctmod4-patchscaleTrue-vggfeat22_p3eq.h5'
 print( os.path.isfile(ofn) )
 print( ofn )
 if not os.path.isfile(ofn):
-    ofn='./models/dpr_v0.h5'
+    ofn='./models/dpr_v0.1.h5'
 
 if os.path.isfile(ofn):
     print( "load " + ofn )
