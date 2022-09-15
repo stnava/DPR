@@ -72,7 +72,6 @@ from datetime import datetime
 
 import sys
 arglist = (sys.argv)
-print( arglist )
 arglist=["name",5,"True",0.5,256,"True","True"]
 nbp=int( arglist[1] )
 do22=(arglist[2] == "True" ) | (arglist[2] == 1 )
@@ -497,7 +496,7 @@ imgfnsTest = imgfns[(n+1):len(imgfns)]    # just a few test for now
 # here which is true in this case.  small changes would be needed for
 # generalization.
 img = ants.image_read( imgfnsTrain[0] )
-print( imgfns )
+print( imgfns[0] )
 
 
 # In[91]:
@@ -621,7 +620,7 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz )
 # In[113]:
 
 
-mydatgen = my_generator( 32, 256, istest=False ) # FIXME for a real training run
+mydatgen = my_generator( 32, 64, istest=False ) # FIXME for a real training run
 mydatgenTest = my_generator( 4, 16, istest=True, target_patch_size=96 ) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf = next( mydatgenTest )
 
