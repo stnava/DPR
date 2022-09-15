@@ -665,7 +665,7 @@ print( "begin training", flush=True  )
 # mdl(patchesResamTeTf ).shape
 
 
-for myrs in range( 1000 ):
+for myrs in range( 100000 ):
     wtsLast = mdl.get_weights()
     tracker = mdl.fit( mydatgen,  epochs=1, steps_per_epoch=1, verbose=0,
         validation_data=(patchesResamTeTf,patchesOrigTeTf),
