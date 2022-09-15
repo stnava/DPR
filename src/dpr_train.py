@@ -471,9 +471,9 @@ mdl = dbpn( (None,None,3),
   number_of_base_filters=32,
   number_of_feature_filters=128,
   number_of_back_projection_stages=nbp,
-  convolution_kernel_size=(3, 3),
+  convolution_kernel_size=(9, 9),
   strides=(1, 1),
-  last_convolution=(1, 1), number_of_loss_functions=1, interpolation='nearest')
+  last_convolution=(3, 3), number_of_loss_functions=1, interpolation='nearest')
 
 
 # collect all the images you have locally
@@ -514,7 +514,7 @@ patch1, patch2 = get_random_patch_pair( img, img2 )
 # In[92]:
 
 
-ofn='./models/dpr_v0.2.h5'
+ofn='./models/dpr_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
 
 if os.path.isfile(ofn):
     print( "load " + ofn )
