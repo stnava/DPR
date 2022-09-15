@@ -519,8 +519,7 @@ nff = 256
 convn = 5
 
 
-ofn='./models/dpr_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' +
-    str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
+ofn='./models/dpr_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
 
 if os.path.isfile(ofn):
     print( "load " + ofn )
