@@ -561,7 +561,7 @@ my_loss_6( patchesPred, patchesOrigTeTf )
 opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 mdl.compile(optimizer=opt, loss=my_loss_6)
 tracker = mdl.fit( mydatgen,  epochs=1, steps_per_epoch=1, verbose=2,
-    workers = 4, use_multiprocessing=False )
+    workers = 1, use_multiprocessing=False )
 
 derka
 
