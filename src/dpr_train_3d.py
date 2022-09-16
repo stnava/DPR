@@ -394,7 +394,8 @@ grader = antspynet.create_resnet_model_3d(
     cardinality = 1,
     squeeze_and_excite = False )
 # the folder and data below as available from antspyt1w get_data
-grader.load_weights( "/Users/stnava/.antspyt1w/resnet_grader.h5" )
+graderfn = os.path.expanduser("~" + "/.antspyt1w/resnet_grader.h5" )
+grader.load_weights( graderfn)
 feature_extractor = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[6].output )
 
 
