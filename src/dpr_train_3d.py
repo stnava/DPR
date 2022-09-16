@@ -494,7 +494,7 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
             img = ants.image_read( imgfn ).iMath("Normalize")
             if img.components > 1:
                 img = ants.split_channels(img)[0]
-            img = ants.crop_image( img, ants.threshold_image( img, "Otsu", 1 ) )
+            img = ants.crop_image( img, ants.threshold_image( img, 0.05, 1 ) )
             ants.set_origin( img, ants.get_center_of_mass(img) )
             img = ants.iMath(img,"Normalize")
             rRotGenerator = ants.contrib.RandomRotate3D( ( -25, 25 ), reference=img )
