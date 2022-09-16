@@ -559,7 +559,7 @@ def my_loss_6(y_true, y_pred,
 # my_loss_6( patchesPred, patchesOrigTeTf )
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
-opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
+opt = tf.keras.optimizers.Adam(learning_rate=1e-5)
 mdl.compile(optimizer=opt, loss=my_loss_6)
 
 # set up some parameters for tracking performance
@@ -567,7 +567,6 @@ bestValLoss=1e12
 bestSSIM=0.0
 bestQC0 = -1000
 bestQC1 = -1000
-
 
 print( "begin training", flush=True  )
 for myrs in range( 100000 ):
@@ -593,9 +592,8 @@ vggTerm = tf.reduce_mean(tf.square(feature_extractor(patchesOrigTeTf)-feature_ex
 # qcTerm = tf.reduce_mean( tf.square( qcmodel( patchesPred/127.5 ) - qcmodel( patchesHiTe/127.5 ) ), axis=[0])
 tvTerm = tf.reduce_mean( tf.image.total_variation( tf.squeeze(patchesPred[0,:,:,:,:] ) ))
 print( msqTerm )
-print( vggTerm * 0.1 )
-# print( qcTerm * [50.0,0.5] )
-print( tvTerm * 1e-4 )
+print( vggTerm  )
+print( tvTerm  )
 my_loss_6( patchesPred, patchesOrigTeTf )
 
 
