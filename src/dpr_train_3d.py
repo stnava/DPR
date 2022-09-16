@@ -530,7 +530,7 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
 
 # In[113]:
 
-mybs = 12
+mybs = 4
 mydatgen = my_generator( 8, mybs, istest=False ) # FIXME for a real training run
 mydatgenTest = my_generator( 4, mybs, istest=True ) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
@@ -548,6 +548,7 @@ def my_loss_6(y_true, y_pred,
     vggTerm = tf.reduce_mean(vggsquared_difference, axis=myax)
     tvTerm = tf.cast( 0.0, 'float32')
     loss = msqTerm * msqwt + vggTerm * fw
+    return( loss )
     mytv = 0.0
     myr = 2 # int( y_true.shape.as_list()[0] )
     for k in range( myr ):
