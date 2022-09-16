@@ -537,8 +537,8 @@ mydatgenTest = my_generator( 4, mybs, istest=True ) # FIXME for a real training 
 patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
 
 def my_loss_6(y_true, y_pred,
-  msqwt = tf.constant( 1.0 ),
-  fw=tf.constant( 5.0), # this is a starter weight - might need to be optimized
+  msqwt = tf.constant( 10.0 ),
+  fw=tf.constant( 500.0), # this is a starter weight - might need to be optimized
   tvwt = tf.constant( 1.0e-8 ) ): # this is a starter weight - might need to be optimized
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3,4]
