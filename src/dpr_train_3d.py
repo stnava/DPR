@@ -549,17 +549,21 @@ def my_loss_6(y_true, y_pred,
     tvTerm = tf.cast( 0.0, 'float32')
     loss = msqTerm * msqwt + vggTerm * fw
     mytv = 0.0
-    for k in range(int(y_pred.shape[0]) ):
+    myr = 2 # int( y_true.shape.as_list()[0] )
+    for k in range( myr ):
         sqzd = y_pred[k,:,:,:,:]
         mytv = mytv + tf.reduce_mean( tf.image.total_variation( sqzd ) ) * tvwt
     return( loss + mytv )
 
-# my_loss_6( patchesPred, patchesOrigTeTf )
+my_loss_6( patchesPred, patchesOrigTeTf )
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
 opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 mdl.compile(optimizer=opt, loss=my_loss_6)
+tracker = mdl.fit( mydatgen,  epochs=1, steps_per_epoch=1, verbose=2,
+    workers = 4, use_multiprocessing=False )
 
+derka
 
 # set up some parameters for tracking performance
 bestValLoss=1e12
