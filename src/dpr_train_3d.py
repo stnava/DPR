@@ -608,8 +608,9 @@ rimg = tx0.apply_to_image( img1 )
 rimg = tx0inv.apply_to_image( rimg )
 antspynet.psnr(img1,rimg)
 ants.image_write( rimg, '/tmp/tempRR.nii.gz' )
-sr = antspynet.apply_super_resolution_model_to_image( rimg,
-  mdl, regression_order=None )
+sr = antspynet.apply_super_resolution_model_to_image(
+    rimg, target_range=[0,1],
+    mdl, regression_order=None )
 ants.image_write( sr, '/tmp/tempDPR.nii.gz' )
 # some metrics on the output
 gmsdSR = antspynet.gmsd(img1,sr)
@@ -624,6 +625,10 @@ print("ssim Test: " + str( ssimBi ) + " vs SR: " + str( ssimSR ), flush=True  )
 
 
 # look at generated data
-wh=1
+wh=2
 g1 = ants.from_numpy( patchesResamTeTf[wh,:,:,:,0].numpy() )
-g2 = ants.from_numpy( patchesOrigTeTf[wh,:,:,:,0].numpy() )
+g2 = ants.from_numpy( mdl(patchesResamTeTf)[wh,:,:,:,0].numpy() )
+g3 = ants.from_numpy( patchesOrigTeTf[wh,:,:,:,0].numpy() )
+antspynet.psnr(g1,g2)
+antspynet.psnr(g2,g3)
+antspynet.psnr(g1,g3)
