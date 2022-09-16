@@ -399,59 +399,6 @@ grader.load_weights( graderfn)
 feature_extractor = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[6].output )
 
 
-# **loss term**<br>
-# set up custom loss function with msq and vgg22 features - i have set the<br>
-# parameters here manually to defaults that produced interesting results.<br>
-# not making a claim that these are better or worse than other parameter sets.<br>
-# VGG22 is shallow and fast to compute.<br>
-# the loss function is a sum over:<br>
-# 1. mean squared intensity difference<br>
-# 2. VGG feature norms<br>
-# 3. an experimental neural QC-metric<br>
-# 4. an experimental neural QC-metric<br>
-# 5. the total variation loss
-
-# In[80]:
-
-
-def my_loss_6(y_true, y_pred,
-  msqwt = tf.constant( 1.0 ),
-  fw=tf.constant( 50.0),
-  tvwt = tf.constant( 1.0e-4 ) ):
-    squared_difference = tf.square(y_true - y_pred)
-    myax = [1,2,3,4]
-    msqTerm = tf.reduce_mean(squared_difference, axis=myax)
-    temp1 = feature_extractor(y_true)
-    temp2 = feature_extractor(y_pred)
-    vggsquared_difference = tf.square(temp1-temp2)
-    vggTerm = tf.reduce_mean(vggsquared_difference, axis=myax)
-    tvTerm = 0.0
-    for k in range( y_pred.shape[0] ):
-        sqzd = tf.squeeze( y_pred[k,:,:,:,:] )
-        tvTerm = tvTerm + tf.reduce_mean( tf.image.total_variation( sqzd ) ) * tvwt
-    return ( msqTerm * msqwt + vggTerm * fw + tvTerm )
-
-def my_loss_6(y_true, y_pred,
-  msqwt = tf.constant( 1.0 ),
-  fw=tf.constant( 50.0),
-  tvwt = tf.constant( 1.0e-4 ) ):
-    squared_difference = tf.square(y_true - y_pred)
-    myax = [1,2,3,4]
-    msqTerm = tf.reduce_mean(squared_difference, axis=myax)
-    temp1 = feature_extractor(y_true)
-    temp2 = feature_extractor(y_pred)
-    vggsquared_difference = tf.square(temp1-temp2)
-    vggTerm = tf.reduce_mean(vggsquared_difference, axis=myax)
-    tvTerm = tf.cast( 0.0, 'float32')
-    sqzd = tf.squeeze( y_pred )
-    loss = msqTerm * msqwt + vggTerm * fw
-    # for k in range( sqzd.shape[0] ):
-    #    sqzd1 = tf.squeeze( sqzd[k,:,:,:] )
-    #    tvTerm = tvTerm + tf.reduce_mean( tf.image.total_variation( sqzd1 ) ) * tvwt
-    return (  loss + tvTerm )
-
-# my_loss_6( patchesPred, patchesOrigTeTf )
-
 def my_loss_msq(y_true, y_pred  ):
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3,4]
@@ -511,15 +458,7 @@ if os.path.isfile(ofn):
     mdl = tf.keras.models.load_model( ofn, compile=False )
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
-ct = 0
 opt = tf.keras.optimizers.Adam(learning_rate=1e-5)
-
-
-# model compilation
-
-# In[87]:
-
-
 mdl.compile(optimizer=opt, loss=my_loss_6)
 
 
@@ -609,10 +548,31 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
 
 # In[113]:
 
-
-mydatgen = my_generator( 8, 12, istest=False ) # FIXME for a real training run
-mydatgenTest = my_generator( 8, 12, istest=True ) # FIXME for a real training run
+mybs = 4
+mydatgen = my_generator( 8, mybs, istest=False ) # FIXME for a real training run
+mydatgenTest = my_generator( 8, 4, istest=True ) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
+
+def my_loss_6(y_true, y_pred,
+  msqwt = tf.constant( 1.0 ),
+  fw=tf.constant( 50.0),
+  tvwt = tf.constant( 1.0e-6 ) ):
+    squared_difference = tf.square(y_true - y_pred)
+    myax = [1,2,3,4]
+    msqTerm = tf.reduce_mean(squared_difference, axis=myax)
+    temp1 = feature_extractor(y_true)
+    temp2 = feature_extractor(y_pred)
+    vggsquared_difference = tf.square(temp1-temp2)
+    vggTerm = tf.reduce_mean(vggsquared_difference, axis=myax)
+    tvTerm = tf.cast( 0.0, 'float32')
+    loss = msqTerm * msqwt + vggTerm * fw
+    mytv = 0.0
+    for k in range(int(y_pred.shape[0]) ):
+        sqzd = y_pred[k,:,:,:,:]
+        mytv = mytv + tf.reduce_mean( tf.image.total_variation( sqzd ) ) * tvwt
+    return( loss + mytv )
+
+# my_loss_6( patchesPred, patchesOrigTeTf )
 
 
 # set up some parameters for tracking performance
