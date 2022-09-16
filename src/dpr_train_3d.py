@@ -74,9 +74,7 @@ import sys
 arglist = (sys.argv)
 arglist=["name",5,"True",0.5,256,"True","True"]
 nbp=int( arglist[1] )
-featureWeight = 200.0
 ctmod = 10
-mybs  = 1028
 patch_scale = False
 
 
@@ -84,15 +82,6 @@ patch_scale = False
 # set empirically or by parameter search where quality is assessed against an independent metric
 
 # In[69]:
-
-
-if len( arglist ) > 3:
-    featureWeight = float( arglist[3] )
-    print( "featureWeight" + str( featureWeight) )
-if len( arglist ) > 4:
-    ctmod = int( arglist[4] )
-if len( arglist ) > 5:
-    patch_scale = arglist[5] == "True"
 
 
 # set up naming such that we know something about the stored network
@@ -114,7 +103,6 @@ import numpy as np
 import tensorflow as tf
 import ants
 import tensorflow.keras as keras
-featureWeight = tf.constant( featureWeight )
 
 
 # **dependencies**<br>
@@ -139,8 +127,6 @@ offsetIntensity = 127.5
 
 
 # load in relevant objects from keras so we can build our network
-
-# In[73]:
 
 
 from keras.models import Model
@@ -427,7 +413,7 @@ mdl = dbpn( (None,None,None,1),
 # collect all the images you have locally
 
 print("assemble images", flush=True )
-imgfns = glob.glob( "/raid/data_BA/brains/HCP/T*w/*nii.gz")
+imgfns = glob.glob( "/raid/data_BA/brains/HCP/T*w/*nii.gz") + glob.glob( "/raid/data_BA/brains/HCP/T*w/*nii.gz")
 if len(imgfns) == 0:
     imgfns = glob.glob( "/Users/stnava/.antspyt1w/2*T1w*gz")
 random.shuffle(imgfns)
@@ -456,10 +442,6 @@ patch1, patch2 = get_random_patch_pair( img, img, patchWidth=32 )
 if os.path.isfile(ofn):
     print( "load " + ofn )
     mdl = tf.keras.models.load_model( ofn, compile=False )
-
-# set an optimizer - just standard Adam - may be sensitive to learning_rate
-opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
-mdl.compile(optimizer=opt, loss=my_loss_6)
 
 
 # resampling - use a custom antspynet layer for this (also in antsrnet)<br>
@@ -498,7 +480,7 @@ rmodelnn = tf.keras.Model(inputs=[myinput, mytarget], outputs=outputnn)
 
 
 def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
-    patch_scaler=False, verbose = False ):
+    patch_scaler=True, verbose = False ):
     while True:
         for myn in range(nImages):
             patchesOrig = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
@@ -548,9 +530,9 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
 
 # In[113]:
 
-mybs = 4
+mybs = 12
 mydatgen = my_generator( 8, mybs, istest=False ) # FIXME for a real training run
-mydatgenTest = my_generator( 8, 4, istest=True ) # FIXME for a real training run
+mydatgenTest = my_generator( 4, mybs, istest=True ) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
 
 def my_loss_6(y_true, y_pred,
@@ -574,38 +556,19 @@ def my_loss_6(y_true, y_pred,
 
 # my_loss_6( patchesPred, patchesOrigTeTf )
 
+# set an optimizer - just standard Adam - may be sensitive to learning_rate
+opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
+mdl.compile(optimizer=opt, loss=my_loss_6)
+
 
 # set up some parameters for tracking performance
-
-# In[98]:
-
-
 bestValLoss=1e12
 bestSSIM=0.0
 bestQC0 = -1000
 bestQC1 = -1000
 
 
-# we are going to run this for some indeterminate amount of time ie 5000 epochs<br>
-# looks like i am doing some exponential smoothing here which is why the<br>
-# variable wtsLast is stored.  i am not sure if workers > 1 would be effective.
-
-# **training:** just call fit with the data generator<br>
-# **evaluation:** after an epoch, run the model on the test data with some auxiliary metrics<br>
-# **checkpoints:** use a greedy approach saving only the best performing network
-
-# In[ ]:
-
-
-
-
-
-# In[99]:
-
-
 print( "begin training", flush=True  )
-# mdl(patchesResamTeTf ).shape
-deka
 for myrs in range( 100000 ):
     tracker = mdl.fit( mydatgen,  epochs=1, steps_per_epoch=1, verbose=0,
         validation_data=(patchesResamTeTf,patchesOrigTeTf),
