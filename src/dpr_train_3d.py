@@ -609,8 +609,9 @@ rimg = tx0inv.apply_to_image( rimg )
 antspynet.psnr(img1,rimg)
 ants.image_write( rimg, '/tmp/tempRR.nii.gz' )
 sr = antspynet.apply_super_resolution_model_to_image(
-    rimg, target_range=[0,1],
-    mdl, regression_order=None )
+    rimg,
+    mdl,
+    target_range=[0,1], regression_order=None )
 ants.image_write( sr, '/tmp/tempDPR.nii.gz' )
 # some metrics on the output
 gmsdSR = antspynet.gmsd(img1,sr)
