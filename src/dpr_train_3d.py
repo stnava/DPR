@@ -479,7 +479,9 @@ mdl = dbpn( (None,None,None,1),
 # collect all the images you have locally
 
 print("assemble images", flush=True )
-imgfns = glob.glob( "/Users/stnava/.antspyt1w/2*T1w*gz")
+imgfns = glob.glob( "/raid/data_BA/brains/HCP/T*w/*nii.gz")
+if len(imgfns) == 0:
+    imgfns = glob.glob( "/Users/stnava/.antspyt1w/2*T1w*gz")
 random.shuffle(imgfns)
 # 90\% training data
 n = round( len( imgfns ) * 0.9 )
