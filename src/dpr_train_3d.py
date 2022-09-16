@@ -550,8 +550,8 @@ def my_loss_6(y_true, y_pred,
     loss = msqTerm * msqwt + vggTerm * fw
     # return( loss )
     mytv = 0.0
-    myr = y_true.shape.as_list()[0]
-    for k in range( myr ):
+    # myr = y_true.shape.as_list()[0]
+    for k in range( 4 ): # BUG not sure why myr fails .... might be old TF version
         sqzd = y_pred[k,:,:,:,:]
         mytv = mytv + tf.reduce_mean( tf.image.total_variation( sqzd ) ) * tvwt
     return( loss + mytv )
