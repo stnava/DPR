@@ -468,6 +468,7 @@ def my_loss_54(y_true, y_pred):
 nfilt=64
 nff = 256
 convn = 5
+ofn='./models/dpr_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
 mdl = dbpn( (None,None,3),
   number_of_outputs=3,
   number_of_base_filters=nfilt,
@@ -513,13 +514,7 @@ patch1, patch2 = get_random_patch_pair( img, img2 )
 
 # get pre-trained network weights
 
-# In[92]:
-nfilt=64
-nff = 256
-convn = 5
 
-
-ofn='./models/dpr_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
 
 if os.path.isfile(ofn):
     print( "load " + ofn )
@@ -663,7 +658,7 @@ bestQC1 = -1000
 
 print( "begin training", flush=True  )
 # mdl(patchesResamTeTf ).shape
-
+derka
 
 for myrs in range( 100000 ):
     wtsLast = mdl.get_weights()
@@ -735,6 +730,13 @@ psnrBi = antspynet.psnr(img1,rimg)
 print("PSNR Test: " + str( psnrBi ) + " vs SR: " + str( psnrSR ), flush=True  )
 print("GMSD Test: " + str( gmsdBi ) + " vs SR: " + str( gmsdSR ), flush=True  )
 print("ssim Test: " + str( ssimBi ) + " vs SR: " + str( ssimSR ), flush=True  )
+wh=1 # 129
+pp = mdl.predict( patchesResamTeTf, batch_size = 1 )
+comparisonimg = ants.from_numpy( np.concatenate(
+ [ rimg.numpy()+ 127.5,
+   sr.numpy() + 127.5,
+   img1.numpy()+ 127.5 ], axis=0 ) )
+ants.plot( comparisonimg )
 # ants.image_write( imgt, '/tmp/tempGTz.nii.gz' )
 # ants.image_write( sro, '/tmp/tempSRz.nii.gz' )
 # ants.image_write( imgu, '/tmp/tempUpz.nii.gz' )

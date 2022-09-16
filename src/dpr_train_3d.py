@@ -458,7 +458,7 @@ if os.path.isfile(ofn):
     mdl = tf.keras.models.load_model( ofn, compile=False )
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
-opt = tf.keras.optimizers.Adam(learning_rate=1e-5)
+opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 mdl.compile(optimizer=opt, loss=my_loss_6)
 
 
@@ -555,8 +555,8 @@ patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
 
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 1.0 ),
-  fw=tf.constant( 50.0),
-  tvwt = tf.constant( 1.0e-6 ) ):
+  fw=tf.constant( 5.0), # this is a starter weight - might need to be optimized
+  tvwt = tf.constant( 1.0e-8 ) ): # this is a starter weight - might need to be optimized
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3,4]
     msqTerm = tf.reduce_mean(squared_difference, axis=myax)
@@ -605,7 +605,7 @@ bestQC1 = -1000
 
 print( "begin training", flush=True  )
 # mdl(patchesResamTeTf ).shape
-
+deka
 for myrs in range( 100000 ):
     tracker = mdl.fit( mydatgen,  epochs=1, steps_per_epoch=1, verbose=0,
         validation_data=(patchesResamTeTf,patchesOrigTeTf),
@@ -633,3 +633,29 @@ print( vggTerm * 0.1 )
 # print( qcTerm * [50.0,0.5] )
 print( tvTerm * 1e-4 )
 my_loss_6( patchesPred, patchesOrigTeTf )
+
+
+
+
+#### example inference
+img1 = ants.image_read( 'data/blocki.nii.gz' )
+rRotGenerator = ants.contrib.RandomRotate3D( ( -25, 25 ), reference=img1 )
+tx0 = rRotGenerator.transform()
+tx0inv = ants.invert_ants_transform(tx0)
+rimg = tx0.apply_to_image( img1 )
+rimg = tx0inv.apply_to_image( rimg )
+antspynet.psnr(img1,rimg)
+ants.image_write( rimg, '/tmp/tempRR.nii.gz' )
+sr = antspynet.apply_super_resolution_model_to_image( rimg,
+  mdl, regression_order=None )
+ants.image_write( sr, '/tmp/tempDPR.nii.gz' )
+# some metrics on the output
+gmsdSR = antspynet.gmsd(img1,sr)
+gmsdBi = antspynet.gmsd(img1,rimg)
+ssimSR = antspynet.ssim(img1,sr)
+ssimBi = antspynet.ssim(img1,rimg)
+psnrSR = antspynet.psnr(img1,sr)
+psnrBi = antspynet.psnr(img1,rimg)
+print("PSNR Test: " + str( psnrBi ) + " vs SR: " + str( psnrSR ), flush=True  )
+print("GMSD Test: " + str( gmsdBi ) + " vs SR: " + str( gmsdSR ), flush=True  )
+print("ssim Test: " + str( ssimBi ) + " vs SR: " + str( ssimSR ), flush=True  )
