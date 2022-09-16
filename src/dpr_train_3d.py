@@ -491,12 +491,12 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
                 imgfn = random.sample( imgfnsTest, 1 )[0]
             if verbose:
                 print(imgfn)
-            img = ants.image_read( imgfn )
+            img = ants.image_read( imgfn ).iMath("Normalize")
             if img.components > 1:
                 img = ants.split_channels(img)[0]
-            img = ants.iMath(img, "Normalize")
+            img = ants.crop_image( img, ants.threshold_image( img, "Otsu", 1 ) )
             ants.set_origin( img, ants.get_center_of_mass(img) )
-            img = img * offsetIntensity*2.0 - offsetIntensity # for VGG
+            img = ants.iMath(img,"Normalize")
             rRotGenerator = ants.contrib.RandomRotate3D( ( -25, 25 ), reference=img )
             tx0 = rRotGenerator.transform()
             tx0inv = ants.invert_ants_transform(tx0)
@@ -510,18 +510,16 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
                     rimgp = rimgp - imgpmin
                     imgpmax = imgp.max()
                     if imgpmax > 0 :
-                        imgp = imgp / imgpmax * offsetIntensity*2.0 - offsetIntensity # for VGG
-                        rimgp = rimgp / imgpmax * offsetIntensity*2.0 - offsetIntensity # for VGG
+                        imgp = imgp / imgpmax
+                        rimgp = rimgp / imgpmax
                 coinflip = np.random.choice([True,False,False,False,False], size=1)[0]
-                if coinflip :
-                    rimpg = imgp
+                # if coinflip :
+                #    rimpg = imgp
                 patchesOrig[myb,:,:,:,0] = imgp.numpy()
                 patchesResam[myb,:,:,:,0] = rimgp.numpy()
             patchesOrig = tf.cast( patchesOrig, "float32")
             patchesResam = tf.cast( patchesResam, "float32")
             yield (patchesResam, patchesOrig)
-
-
 
 # instanstiate the generator function with a given sub-batch and total batch size<br>
 # i dont entirely understand how this works (it's farily new) but it seems to<br>
@@ -567,7 +565,7 @@ bestValLoss=1e12
 bestSSIM=0.0
 bestQC0 = -1000
 bestQC1 = -1000
-
+derka
 print( "begin training", flush=True  )
 for myrs in range( 100000 ):
     tracker = mdl.fit( mydatgen,  epochs=2, steps_per_epoch=10, verbose=0,
