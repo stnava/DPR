@@ -570,7 +570,7 @@ bestQC1 = -1000
 
 print( "begin training", flush=True  )
 for myrs in range( 100000 ):
-    tracker = mdl.fit( mydatgen,  epochs=1, steps_per_epoch=1, verbose=0,
+    tracker = mdl.fit( mydatgen,  epochs=2, steps_per_epoch=10, verbose=0,
         validation_data=(patchesResamTeTf,patchesOrigTeTf),
         workers = 1, use_multiprocessing=False )
     print( "ntrain: " + str(myrs) + " loss " + str( tracker.history['loss'][0] ) + ' val-loss ' + str(tracker.history['val_loss'][0]), flush=True  )
