@@ -502,6 +502,9 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
             tx0inv = ants.invert_ants_transform(tx0)
             rimg = tx0.apply_to_image( img )
             rimg = tx0inv.apply_to_image( rimg )
+            masker = ants.threshold_image(rimg,0.01,1)
+            rimg = ants.crop_image( rimg * masker, masker )
+            img = ants.crop_image( img * masker, masker )
             for myb in range(nPatches):
                 imgp, rimgp = get_random_patch_pair( img, rimg, target_patch_size )
                 imgpmin = imgp.min()
@@ -565,7 +568,6 @@ bestValLoss=1e12
 bestSSIM=0.0
 bestQC0 = -1000
 bestQC1 = -1000
-derka
 print( "begin training", flush=True  )
 for myrs in range( 100000 ):
     tracker = mdl.fit( mydatgen,  epochs=2, steps_per_epoch=10, verbose=0,
