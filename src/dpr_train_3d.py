@@ -560,7 +560,7 @@ def my_loss_6(y_true, y_pred,
 # my_loss_6( patchesPred, patchesOrigTeTf )
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
-opt = tf.keras.optimizers.Adam(learning_rate=1e-3)
+opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
 mdl.compile(optimizer=opt, loss=my_loss_6)
 
 # set up some parameters for tracking performance
@@ -570,7 +570,7 @@ bestQC0 = -1000
 bestQC1 = -1000
 print( "begin training", flush=True  )
 for myrs in range( 100000 ):
-    tracker = mdl.fit( mydatgen,  epochs=2, steps_per_epoch=10, verbose=0,
+    tracker = mdl.fit( mydatgen,  epochs=2, steps_per_epoch=10, verbose=1,
         validation_data=(patchesResamTeTf,patchesOrigTeTf),
         workers = 1, use_multiprocessing=False )
     print( "ntrain: " + str(myrs) + " loss " + str( tracker.history['loss'][0] ) + ' val-loss ' + str(tracker.history['val_loss'][0]), flush=True  )
