@@ -397,9 +397,9 @@ def my_loss_msq(y_true, y_pred  ):
 
 # In[82]:
 
-nfilt=32
-nff = 64
-convn = 5
+nfilt=64
+nff = 256
+convn = 6
 ofn='./models/dpr3d_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
 mdl = dbpn( (None,None,None,1),
   number_of_outputs=1,
@@ -621,3 +621,9 @@ psnrBi = antspynet.psnr(img1,rimg)
 print("PSNR Test: " + str( psnrBi ) + " vs SR: " + str( psnrSR ), flush=True  )
 print("GMSD Test: " + str( gmsdBi ) + " vs SR: " + str( gmsdSR ), flush=True  )
 print("ssim Test: " + str( ssimBi ) + " vs SR: " + str( ssimSR ), flush=True  )
+
+
+# look at generated data
+wh=1
+g1 = ants.from_numpy( patchesResamTeTf[wh,:,:,:,0].numpy() )
+g2 = ants.from_numpy( patchesOrigTeTf[wh,:,:,:,0].numpy() )
