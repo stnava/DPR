@@ -548,15 +548,15 @@ def my_loss_6(y_true, y_pred,
     vggTerm = tf.reduce_mean(vggsquared_difference, axis=myax)
     tvTerm = tf.cast( 0.0, 'float32')
     loss = msqTerm * msqwt + vggTerm * fw
-    return( loss )
+    # return( loss )
     mytv = 0.0
-    myr = 2 # int( y_true.shape.as_list()[0] )
+    myr = y_true.shape.as_list()[0]
     for k in range( myr ):
         sqzd = y_pred[k,:,:,:,:]
         mytv = mytv + tf.reduce_mean( tf.image.total_variation( sqzd ) ) * tvwt
     return( loss + mytv )
 
-my_loss_6( patchesPred, patchesOrigTeTf )
+# my_loss_6( patchesPred, patchesOrigTeTf )
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
 opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
