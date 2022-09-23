@@ -402,7 +402,7 @@ def my_loss_msq(y_true, y_pred  ):
 nfilt=64
 nff = 256
 convn = 6
-ofn='./models/dpr3d_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
+ofn='./models/dsr3d_2up_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
 mdl = dbpn( (None,None,None,1),
   number_of_outputs=1,
   number_of_base_filters=nfilt,
@@ -501,14 +501,18 @@ def my_generator( nPatches , nImages = 16, istest=False,
             img = ants.crop_image( img, ants.threshold_image( img, 0.05, 1 ) )
             ants.set_origin( img, ants.get_center_of_mass(img) )
             img = ants.iMath(img,"Normalize")
-            spc = ants.get_spacing( img ) * 2.0
+            spc = ants.get_spacing( img )
+            newspc = []
+            for jj in range(len(spc)):
+                newspc.append(spc[jj]*2.0)
             interp_type = random.choice( [0,1] )
-            rimg = ants.resample_image( img, spc, use_voxels = False, interp_type=interp_type  )
-            masker = ants.threshold_image(rimg,0.01,1)
-            rimg = ants.crop_image( rimg * masker, masker )
-            img = ants.crop_image( img * masker, masker )
+            # masker = ants.threshold_image(img,0.01,1)
+            # rmasker = ants.threshold_image(rimg,0.01,1)
+            # rimg = ants.crop_image( rimg * rmasker, masker )
+            # img = ants.crop_image( img * masker, masker )
             for myb in range(nPatches):
-                imgp, rimgp = get_random_patch_pair( img, rimg, target_patch_size )
+                imgp = get_random_patch( img, target_patch_size )
+                rimgp = ants.resample_image( imgp, newspc, use_voxels = False, interp_type=interp_type  )
                 imgpmin = imgp.min()
                 if patch_scaler:
                     imgp = imgp - imgpmin
@@ -537,7 +541,7 @@ patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
 
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 10.0 ),
-  fw=tf.constant( 500.0), # this is a starter weight - might need to be optimized
+  fw=tf.constant( 100.0), # this is a starter weight - might need to be optimized
   tvwt = tf.constant( 1.0e-8 ) ): # this is a starter weight - might need to be optimized
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3,4]
