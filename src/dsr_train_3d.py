@@ -535,7 +535,7 @@ def my_generator( nPatches , nImages = 16, istest=False,
 # In[113]:
 
 mybs = 1
-mydatgen = my_generator( 2, mybs, istest=False ) # FIXME for a real training run
+mydatgen = my_generator( 4, mybs, istest=False ) # FIXME for a real training run
 mydatgenTest = my_generator( 4, mybs, istest=True ) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
 
