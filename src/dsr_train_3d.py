@@ -327,7 +327,7 @@ def dbpn(input_image_size,
 
 
 # set up strides and patch sizes - **these could also be explored empirically**
-pszlo = 16
+pszlo = 32
 psz = pszlo * 2
 
 # generate a random corner index for a patch
@@ -535,8 +535,8 @@ def my_generator( nPatches , nImages = 16, istest=False,
 # In[113]:
 
 mybs = 1
-mydatgen = my_generator( 2, mybs, istest=False ) # FIXME for a real training run
-mydatgenTest = my_generator( 2, mybs, istest=True ) # FIXME for a real training run
+mydatgen = my_generator( 1, mybs, istest=False ) # FIXME for a real training run
+mydatgenTest = my_generator( 1, mybs, istest=True ) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf = next( mydatgenTest )
 
 def my_loss_6(y_true, y_pred,
@@ -552,12 +552,10 @@ def my_loss_6(y_true, y_pred,
     vggTerm = tf.reduce_mean(vggsquared_difference, axis=myax)
     tvTerm = tf.cast( 0.0, 'float32')
     loss = msqTerm * msqwt + vggTerm * fw
-    # return( loss )
     mytv = 0.0
-    # myr = y_true.shape.as_list()[0]
-    for k in range( 4 ): # BUG not sure why myr fails .... might be old TF version
-        sqzd = y_pred[k,:,:,:,:]
-        mytv = mytv + tf.reduce_mean( tf.image.total_variation( sqzd ) ) * tvwt
+#    for k in range( mybs ): # BUG not sure why myr fails .... might be old TF version
+#        sqzd = y_pred[k,:,:,:,:]
+#        mytv = mytv + tf.reduce_mean( tf.image.total_variation( sqzd ) ) * tvwt
     return( loss + mytv )
 
 # my_loss_6( patchesPred, patchesOrigTeTf )
@@ -572,7 +570,6 @@ bestSSIM=0.0
 bestQC0 = -1000
 bestQC1 = -1000
 print( "begin training", flush=True  )
-derka
 for myrs in range( 100000 ):
     tracker = mdl.fit( mydatgen,  epochs=2, steps_per_epoch=10, verbose=1,
         validation_data=(patchesResamTeTf,patchesOrigTeTf),
