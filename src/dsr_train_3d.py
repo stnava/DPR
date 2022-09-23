@@ -536,8 +536,8 @@ def my_generator( nPatches , nImages = 16, istest=False,
 
 mybs = 1
 mydatgen = my_generator( 2, mybs, istest=False ) # FIXME for a real training run
-mydatgenTest = my_generator( 4, mybs, istest=True ) # FIXME for a real training run
-patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
+mydatgenTest = my_generator( 2, mybs, istest=True ) # FIXME for a real training run
+patchesResamTeTf, patchesOrigTeTf = next( mydatgenTest )
 
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 10.0 ),
@@ -577,76 +577,7 @@ for myrs in range( 100000 ):
         validation_data=(patchesResamTeTf,patchesOrigTeTf),
         workers = 1, use_multiprocessing=False )
     print( "ntrain: " + str(myrs) + " loss " + str( tracker.history['loss'][0] ) + ' val-loss ' + str(tracker.history['val_loss'][0]), flush=True  )
-    pp = mdl.predict( patchesResamTeTf, batch_size = 1 )
-    myssimSR = tf.image.psnr( pp + offsetIntensity, patchesOrigTeTf+offsetIntensity, max_val=255 )
-    myssimSR = tf.reduce_mean( myssimSR ).numpy()
-    myssimBI = tf.image.psnr( patchesResamTeTf + offsetIntensity, patchesOrigTeTf+offsetIntensity, max_val=255 )
-    myssimBI = tf.reduce_mean( myssimBI ).numpy()
-    print( "Patch PSNR: " + str( myssimBI ) + " SR: " + str( myssimSR ), flush=True  )
     if ( tracker.history['val_loss'][0] < bestValLoss ):
         print("MyIT " + str( myrs ) + " IS BEST!!", flush=True )
         bestValLoss = tracker.history['val_loss'][0]
         tf.keras.models.save_model( mdl, ofn )
-
-patchesPred = mdl( patchesResamTeTf )
-squared_difference = tf.square(patchesPred - patchesOrigTeTf)
-msqTerm = tf.reduce_mean(squared_difference )
-vggTerm = tf.reduce_mean(tf.square(feature_extractor(patchesOrigTeTf)-feature_extractor(patchesPred)))
-# qcTerm = tf.reduce_mean( tf.square( qcmodel( patchesPred/127.5 ) - qcmodel( patchesHiTe/127.5 ) ), axis=[0])
-tvTerm = tf.reduce_mean( tf.image.total_variation( tf.squeeze(patchesPred[0,:,:,:,:] ) ))
-print( msqTerm * 10 )
-print( vggTerm * 500  )
-print( tvTerm  )
-my_loss_6( patchesPred, patchesOrigTeTf )
-
-
-
-
-#### example inference
-img1 = ants.image_read( '/Users/stnava/.antspyt1w/28386-00000000-T1w-01.nii.gz' ).iMath("Normalize")
-img1 = img1 * antspynet.brain_extraction( img1, 't1' ).threshold_image(0.5,1)
-img1 = ants.crop_image( img1 )
-rRotGenerator = ants.contrib.RandomRotate3D( ( -25, 25 ), reference=img1 )
-tx0 = rRotGenerator.transform()
-tx0inv = ants.invert_ants_transform(tx0)
-rimg = tx0.apply_to_image( img1 )
-rimg = tx0inv.apply_to_image( rimg )
-antspynet.psnr(img1,rimg)
-ants.image_write( rimg, '/tmp/tempRR.nii.gz' )
-sr = antspynet.apply_super_resolution_model_to_image(
-    rimg,
-    mdl,
-    target_range=[0,1], regression_order=None )
-ants.image_write( sr, '/tmp/tempDPR.nii.gz' )
-# some metrics on the output
-gmsdSR = antspynet.gmsd(img1,sr)
-gmsdBi = antspynet.gmsd(img1,rimg)
-ssimSR = antspynet.ssim(img1,sr)
-ssimBi = antspynet.ssim(img1,rimg)
-psnrSR = antspynet.psnr(img1,sr)
-psnrBi = antspynet.psnr(img1,rimg)
-print("PSNR Test: " + str( psnrBi ) + " vs SR: " + str( psnrSR ), flush=True  )
-print("GMSD Test: " + str( gmsdBi ) + " vs SR: " + str( gmsdSR ), flush=True  )
-print("ssim Test: " + str( ssimBi ) + " vs SR: " + str( ssimSR ), flush=True  )
-
-
-
-
-#### example inference on a template
-img1 = ants.image_read( '/Users/stnava/data/data_old/breacher/older_stuff/ExpBreacher/Templates/T_template0.nii.gz' ).iMath("Normalize")
-img1 = img1 * antspynet.brain_extraction( img1, 't1' ).threshold_image(0.5,1)
-img1 = ants.crop_image( img1 )
-sr = antspynet.apply_super_resolution_model_to_image(
-    rimg,
-    mdl,
-    target_range=[0,1], regression_order=None )
-ants.image_write( sr, '/tmp/template.nii.gz' )
-
-# look at generated data
-wh=2
-g1 = ants.from_numpy( patchesResamTeTf[wh,:,:,:,0].numpy() )
-g2 = ants.from_numpy( mdl(patchesResamTeTf)[wh,:,:,:,0].numpy() )
-g3 = ants.from_numpy( patchesOrigTeTf[wh,:,:,:,0].numpy() )
-antspynet.psnr(g1,g2)
-antspynet.psnr(g2,g3)
-antspynet.psnr(g1,g3)

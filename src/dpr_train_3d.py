@@ -534,7 +534,7 @@ def my_generator( nPatches , nImages = 16, istest=False, target_patch_size=psz,
 mybs = 4
 mydatgen = my_generator( 8, mybs, istest=False ) # FIXME for a real training run
 mydatgenTest = my_generator( 4, mybs, istest=True ) # FIXME for a real training run
-patchesResamTeTf, patchesOrigTeTf = next( mydatgen )
+patchesResamTeTf, patchesOrigTeTf = next( mydatgenTest )
 
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 10.0 ),
@@ -591,8 +591,8 @@ msqTerm = tf.reduce_mean(squared_difference )
 vggTerm = tf.reduce_mean(tf.square(feature_extractor(patchesOrigTeTf)-feature_extractor(patchesPred)))
 # qcTerm = tf.reduce_mean( tf.square( qcmodel( patchesPred/127.5 ) - qcmodel( patchesHiTe/127.5 ) ), axis=[0])
 tvTerm = tf.reduce_mean( tf.image.total_variation( tf.squeeze(patchesPred[0,:,:,:,:] ) ))
-print( msqTerm )
-print( vggTerm  )
+print( msqTerm * 10 )
+print( vggTerm * 500  )
 print( tvTerm  )
 my_loss_6( patchesPred, patchesOrigTeTf )
 
@@ -600,7 +600,9 @@ my_loss_6( patchesPred, patchesOrigTeTf )
 
 
 #### example inference
-img1 = ants.image_read( 'data/blocki.nii.gz' )
+img1 = ants.image_read( '/Users/stnava/.antspyt1w/28386-00000000-T1w-01.nii.gz' ).iMath("Normalize")
+img1 = img1 * antspynet.brain_extraction( img1, 't1' ).threshold_image(0.5,1)
+img1 = ants.crop_image( img1 )
 rRotGenerator = ants.contrib.RandomRotate3D( ( -25, 25 ), reference=img1 )
 tx0 = rRotGenerator.transform()
 tx0inv = ants.invert_ants_transform(tx0)
@@ -624,6 +626,18 @@ print("PSNR Test: " + str( psnrBi ) + " vs SR: " + str( psnrSR ), flush=True  )
 print("GMSD Test: " + str( gmsdBi ) + " vs SR: " + str( gmsdSR ), flush=True  )
 print("ssim Test: " + str( ssimBi ) + " vs SR: " + str( ssimSR ), flush=True  )
 
+
+
+
+#### example inference on a template
+img1 = ants.image_read( '/Users/stnava/data/data_old/breacher/older_stuff/ExpBreacher/Templates/T_template0.nii.gz' ).iMath("Normalize")
+img1 = img1 * antspynet.brain_extraction( img1, 't1' ).threshold_image(0.5,1)
+img1 = ants.crop_image( img1 )
+sr = antspynet.apply_super_resolution_model_to_image(
+    rimg,
+    mdl,
+    target_range=[0,1], regression_order=None )
+ants.image_write( sr, '/tmp/template.nii.gz' )
 
 # look at generated data
 wh=2
