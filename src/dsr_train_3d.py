@@ -572,6 +572,7 @@ bestSSIM=0.0
 bestQC0 = -1000
 bestQC1 = -1000
 print( "begin training", flush=True  )
+derka
 for myrs in range( 100000 ):
     tracker = mdl.fit( mydatgen,  epochs=2, steps_per_epoch=10, verbose=1,
         validation_data=(patchesResamTeTf,patchesOrigTeTf),
