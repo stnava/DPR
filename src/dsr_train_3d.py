@@ -327,7 +327,7 @@ def dbpn(input_image_size,
 
 
 # set up strides and patch sizes - **these could also be explored empirically**
-pszlo = 32
+pszlo = 16
 psz = pszlo * 2
 
 # generate a random corner index for a patch
