@@ -328,7 +328,7 @@ def dbpn(input_image_size,
 
 # set up strides and patch sizes - **these could also be explored empirically**
 pszlo = 32
-strider = 2
+strider = 2 # this controls the amount of upsampling  -- 1 = none
 psz = pszlo * strider
 
 # generate a random corner index for a patch
@@ -466,22 +466,13 @@ outputnn = antspynet.ResampleTensorToTargetTensorLayer3D('nearest_neighbor')([my
 rmodelnn = tf.keras.Model(inputs=[myinput, mytarget], outputs=outputnn)
 
 
-# build some test data - high res, low res and bilinear
-
-# In[93]:
-
-
 # **data generation**<br>
 # recent versions of tensorflow/keras allow data generators to be passed<br>
 # directly to the fit function.  underneath, this does a fairly efficient split<br>
-# between GPU and CPU usage and data transfer.  EG probably knows more about this.<br>
+# between GPU and CPU usage and data transfer.<br>
 # this generator randomly chooses between linear and nearest neighbor downsampling.<br>
 # the *patch_scale* option can also be seen here which impacts how the network<br>
 # sees/learns from image intensity.
-
-# In[94]:
-
-
 def my_generator( nPatches , nImages = 16, istest=False,
     target_patch_size=psz,
     target_patch_size_low=pszlo,
@@ -558,7 +549,7 @@ for k in range( 11 ):
 
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 10.0 ),
-  fw=tf.constant( 500.0), # this is a starter weight - might need to be optimized
+  fw=tf.constant( 1500.0), # this is a starter weight - might need to be optimized
   tvwt = tf.constant( 1.0e-8 ) ): # this is a starter weight - might need to be optimized
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3,4]
