@@ -403,7 +403,8 @@ def my_loss_msq(y_true, y_pred  ):
 nfilt=64
 nff = 256
 convn = 6
-ofn='./models/dsr3d_2up_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
+lastconv = 1
+ofn='./models/dsr3d_'+str(strider)+up_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(lastconv)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
 mdl = dbpn( (None,None,None,1),
   number_of_outputs=1,
   number_of_base_filters=nfilt,
@@ -411,7 +412,7 @@ mdl = dbpn( (None,None,None,1),
   number_of_back_projection_stages=nbp,
   convolution_kernel_size=(convn, convn, convn),
   strides=(strider, strider, strider),
-  last_convolution=(3, 3, 3), number_of_loss_functions=1, interpolation='nearest')
+  last_convolution=(lastconv, lastconv, lastconv), number_of_loss_functions=1, interpolation='nearest')
 
 # collect all the images you have locally
 
