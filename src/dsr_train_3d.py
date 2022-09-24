@@ -542,13 +542,19 @@ def my_generator( nPatches , nImages = 16, istest=False,
 # In[113]:
 
 mybs = 1
-mydatgen = my_generator( 1, mybs, istest=False ) # FIXME for a real training run
-mydatgenTest = my_generator( 1, mybs, istest=True ) # FIXME for a real training run
+mydatgen = my_generator( 1, mybs, istest=False , verbose=False) # FIXME for a real training run
+mydatgenTest = my_generator( 1, mybs, istest=True, verbose=True) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf, patchesUpTeTf = next( mydatgenTest )
 
-# for cpu testing
-mydatgenTestBigger = my_generator( 16, 8, istest=True ) # FIXME for a real training run
-patchesResamTeTfB, patchesOrigTeTfB, patchesUpTeTfB = next( mydatgenTestBigger )
+# for cpu testing - too costly to run on gpu - will take cpu penalty here
+mydatgenTest = my_generator( 1, mybs, istest=True, verbose=True) # FIXME for a real training run
+patchesResamTeTfB, patchesOrigTeTfB, patchesUpTeTfB = next( mydatgenTest )
+for k in range( 11 ):
+    mydatgenTest = my_generator( 1, mybs, istest=True, verbose=True) # FIXME for a real training run
+    temp0, temp1, temp2 = next( mydatgenTest )
+    patchesResamTeTfB = tf.concat( [patchesResamTeTfB,temp0],axis=0)
+    patchesOrigTeTfB = tf.concat( [patchesOrigTeTfB,temp1],axis=0)
+    patchesUpTeTfB = tf.concat( [patchesUpTeTfB,temp2],axis=0)
 
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 10.0 ),
