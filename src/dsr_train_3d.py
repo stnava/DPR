@@ -577,7 +577,7 @@ def my_loss_6(y_true, y_pred,
 # my_loss_6( patchesPred, patchesOrigTeTf )
 
 # set an optimizer - just standard Adam - may be sensitive to learning_rate
-opt = tf.keras.optimizers.Adam(learning_rate=1e-4)
+opt = tf.keras.optimizers.Adam(learning_rate=5e-5)
 mdl.compile(optimizer=opt, loss=my_loss_6)
 
 # set up some parameters for tracking performance
