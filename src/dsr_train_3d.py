@@ -546,6 +546,10 @@ mydatgen = my_generator( 1, mybs, istest=False ) # FIXME for a real training run
 mydatgenTest = my_generator( 1, mybs, istest=True ) # FIXME for a real training run
 patchesResamTeTf, patchesOrigTeTf, patchesUpTeTf = next( mydatgenTest )
 
+# for cpu testing
+mydatgenTestBigger = my_generator( 16, 8, istest=True ) # FIXME for a real training run
+patchesResamTeTfB, patchesOrigTeTfB, patchesUpTeTfB = next( mydatgenTestBigger )
+
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 10.0 ),
   fw=tf.constant( 500.0), # this is a starter weight - might need to be optimized
@@ -577,18 +581,20 @@ bestQC0 = -1000
 bestQC1 = -1000
 print( "begin training", flush=True  )
 for myrs in range( 100000 ):
-    tracker = mdl.fit( mydatgen,  epochs=2, steps_per_epoch=10, verbose=1,
+    tracker = mdl.fit( mydatgen,  epochs=2, steps_per_epoch=4, verbose=1,
         validation_data=(patchesResamTeTf,patchesOrigTeTf),
         workers = 1, use_multiprocessing=False )
     print( "ntrain: " + str(myrs) + " loss " + str( tracker.history['loss'][0] ) + ' val-loss ' + str(tracker.history['val_loss'][0]), flush=True  )
-    if ( tracker.history['val_loss'][0] < bestValLoss ):
-        print("MyIT " + str( myrs ) + " IS BEST!!", flush=True )
-        bestValLoss = tracker.history['val_loss'][0]
-        tf.keras.models.save_model( mdl, ofn )
     if myrs % 20 == 0:
-        pp = mdl.predict( patchesResamTeTf, batch_size = 1 )
-        myssimSR = tf.image.psnr( pp * 220, patchesOrigTeTf* 220, max_val=255 )
-        myssimSR = tf.reduce_mean( myssimSR ).numpy()
-        myssimBI = tf.image.psnr( patchesUpTeTf * 220, patchesOrigTeTf* 220, max_val=255 )
-        myssimBI = tf.reduce_mean( myssimBI ).numpy()
-        print( "PSNR Lin: " + str( myssimBI ) + " SR: " + str( myssimSR ), flush=True  )
+        with tf.device("/cpu:0"):
+            tester = mdl.evaluate( patchesResamTeTfB, patchesOrigTeTfB )
+            if ( tester < bestValLoss ):
+                print("MyIT " + str( myrs ) + " IS BEST!!", flush=True )
+                bestValLoss = tester
+                tf.keras.models.save_model( mdl, ofn )
+            pp = mdl.predict( patchesResamTeTf, batch_size = 1 )
+            myssimSR = tf.image.psnr( pp * 220, patchesOrigTeTf* 220, max_val=255 )
+            myssimSR = tf.reduce_mean( myssimSR ).numpy()
+            myssimBI = tf.image.psnr( patchesUpTeTf * 220, patchesOrigTeTf* 220, max_val=255 )
+            myssimBI = tf.reduce_mean( myssimBI ).numpy()
+            print( "PSNR Lin: " + str( myssimBI ) + " SR: " + str( myssimSR ), flush=True  )
