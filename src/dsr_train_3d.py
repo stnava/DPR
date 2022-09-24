@@ -328,7 +328,8 @@ def dbpn(input_image_size,
 
 # set up strides and patch sizes - **these could also be explored empirically**
 pszlo = 32
-psz = pszlo * 2
+strider = 2
+psz = pszlo * strider
 
 # generate a random corner index for a patch
 
@@ -409,7 +410,7 @@ mdl = dbpn( (None,None,None,1),
   number_of_feature_filters=nff,
   number_of_back_projection_stages=nbp,
   convolution_kernel_size=(convn, convn, convn),
-  strides=(2, 2, 2),
+  strides=(strider, strider, strider),
   last_convolution=(3, 3, 3), number_of_loss_functions=1, interpolation='nearest')
 
 # collect all the images you have locally
@@ -492,6 +493,7 @@ def my_generator( nPatches , nImages = 16, istest=False,
             if not istest:
                 imgfn = random.sample( imgfnsTrain, 1 )[0]
             else:
+                patchesUp = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
                 imgfn = random.sample( imgfnsTest, 1 )[0]
             if verbose:
                 print(imgfn)
@@ -504,7 +506,7 @@ def my_generator( nPatches , nImages = 16, istest=False,
             spc = ants.get_spacing( img )
             newspc = []
             for jj in range(len(spc)):
-                newspc.append(spc[jj]*2.0)
+                newspc.append(spc[jj]*strider)
             interp_type = random.choice( [0,1] )
             # masker = ants.threshold_image(img,0.01,1)
             # rmasker = ants.threshold_image(rimg,0.01,1)
@@ -512,19 +514,24 @@ def my_generator( nPatches , nImages = 16, istest=False,
             # img = ants.crop_image( img * masker, masker )
             for myb in range(nPatches):
                 imgp = get_random_patch( img, target_patch_size )
-                rimgp = ants.resample_image( imgp, newspc, use_voxels = False, interp_type=interp_type  )
                 imgpmin = imgp.min()
                 if patch_scaler:
                     imgp = imgp - imgpmin
-                    rimgp = rimgp - imgpmin
                     imgpmax = imgp.max()
                     if imgpmax > 0 :
                         imgp = imgp / imgpmax
-                        rimgp = rimgp / imgpmax
+                rimgp = ants.resample_image( imgp, newspc, use_voxels = False, interp_type=interp_type  )
+                if istest:
+                    rimgbi = ants.resample_image( rimgp, spc, use_voxels = False, interp_type=0  )
                 patchesOrig[myb,:,:,:,0] = imgp.numpy()
                 patchesResam[myb,:,:,:,0] = rimgp.numpy()
+                if istest:
+                    patchesUp[myb,:,:,:,0] = rimgbi.numpy()
             patchesOrig = tf.cast( patchesOrig, "float32")
             patchesResam = tf.cast( patchesResam, "float32")
+            if istest:
+                patchesUp = tf.cast( patchesUp, "float32")
+                yield (patchesResam, patchesOrig,patchesUp)
             yield (patchesResam, patchesOrig)
 
 # instanstiate the generator function with a given sub-batch and total batch size<br>
@@ -537,11 +544,11 @@ def my_generator( nPatches , nImages = 16, istest=False,
 mybs = 1
 mydatgen = my_generator( 1, mybs, istest=False ) # FIXME for a real training run
 mydatgenTest = my_generator( 1, mybs, istest=True ) # FIXME for a real training run
-patchesResamTeTf, patchesOrigTeTf = next( mydatgenTest )
+patchesResamTeTf, patchesOrigTeTf, patchesUpTeTf = next( mydatgenTest )
 
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 10.0 ),
-  fw=tf.constant( 100.0), # this is a starter weight - might need to be optimized
+  fw=tf.constant( 500.0), # this is a starter weight - might need to be optimized
   tvwt = tf.constant( 1.0e-8 ) ): # this is a starter weight - might need to be optimized
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3,4]
@@ -550,12 +557,11 @@ def my_loss_6(y_true, y_pred,
     temp2 = feature_extractor(y_pred)
     vggsquared_difference = tf.square(temp1-temp2)
     vggTerm = tf.reduce_mean(vggsquared_difference, axis=myax)
-    tvTerm = tf.cast( 0.0, 'float32')
     loss = msqTerm * msqwt + vggTerm * fw
-    mytv = 0.0
-#    for k in range( mybs ): # BUG not sure why myr fails .... might be old TF version
-#        sqzd = y_pred[k,:,:,:,:]
-#        mytv = mytv + tf.reduce_mean( tf.image.total_variation( sqzd ) ) * tvwt
+    mytv = tf.cast( 0.0, 'float32')
+    for k in range( mybs ): # BUG not sure why myr fails .... might be old TF version
+        sqzd = y_pred[k,:,:,:,:]
+        mytv = mytv + tf.reduce_mean( tf.image.total_variation( sqzd ) ) * tvwt
     return( loss + mytv )
 
 # my_loss_6( patchesPred, patchesOrigTeTf )
@@ -579,3 +585,10 @@ for myrs in range( 100000 ):
         print("MyIT " + str( myrs ) + " IS BEST!!", flush=True )
         bestValLoss = tracker.history['val_loss'][0]
         tf.keras.models.save_model( mdl, ofn )
+    if myrs % 20 == 0:
+        pp = mdl.predict( patchesResamTeTf, batch_size = 1 )
+        myssimSR = tf.image.psnr( pp * 220, patchesOrigTeTf* 220, max_val=255 )
+        myssimSR = tf.reduce_mean( myssimSR ).numpy()
+        myssimBI = tf.image.psnr( patchesUpTeTf * 220, patchesOrigTeTf* 220, max_val=255 )
+        myssimBI = tf.reduce_mean( myssimBI ).numpy()
+        print( "PSNR Lin: " + str( myssimBI ) + " SR: " + str( myssimSR ), flush=True  )
