@@ -595,12 +595,12 @@ for myrs in range( 100000 ):
         with tf.device("/cpu:0"):
             tester = mdl.evaluate( patchesResamTeTfB, patchesOrigTeTfB )
             if ( tester < bestValLoss ):
-                print("MyIT " + str( myrs ) + " IS BEST!!", flush=True )
+                print("MyIT " + str( myrs ) + " IS BEST!! " + str( tester ) , flush=True )
                 bestValLoss = tester
                 tf.keras.models.save_model( mdl, ofn )
-            pp = mdl.predict( patchesResamTeTf, batch_size = 1 )
-            myssimSR = tf.image.psnr( pp * 220, patchesOrigTeTf* 220, max_val=255 )
+            pp = mdl.predict( patchesResamTeTfB, batch_size = 1 )
+            myssimSR = tf.image.psnr( pp * 220, patchesOrigTeTfB* 220, max_val=255 )
             myssimSR = tf.reduce_mean( myssimSR ).numpy()
-            myssimBI = tf.image.psnr( patchesUpTeTf * 220, patchesOrigTeTf* 220, max_val=255 )
+            myssimBI = tf.image.psnr( patchesUpTeTfB * 220, patchesOrigTeTfB* 220, max_val=255 )
             myssimBI = tf.reduce_mean( myssimBI ).numpy()
             print( "PSNR Lin: " + str( myssimBI ) + " SR: " + str( myssimSR ), flush=True  )
