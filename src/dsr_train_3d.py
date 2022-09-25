@@ -9,6 +9,12 @@
 #!/usr/bin/python3
 import os.path
 from os import path
+
+from pathlib import Path
+import sys
+path_root = Path(__file__).parents[2]
+sys.path.append(str(path_root))
+
 import numpy as np
 import random
 # !pip uninstall antspyx
