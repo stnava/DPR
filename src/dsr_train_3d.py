@@ -9,10 +9,9 @@
 #!/usr/bin/python3
 import os.path
 from os import path
-
 from pathlib import Path
 import sys
-path_root = Path(__file__).parents[2]
+path_root = Path(__file__)
 sys.path.append(str(path_root))
 
 import numpy as np
@@ -22,7 +21,7 @@ import random
 # get_ipython().system('pip install git+https://github.com/ANTsX/ANTsPyNet')
 import ants
 
-import src.dbpn_arch
+import dbpn_arch
 
 
 import ants
