@@ -195,8 +195,8 @@ grader = antspynet.create_resnet_model_3d(
 graderfn = os.path.expanduser("~" + "/.antspyt1w/resnet_grader.h5" )
 grader.load_weights( graderfn)
 feature_extractor = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[6].output )
-feature_extractor_21 = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[21].output )
-feature_extractor_21 = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[21].output )
+feature_extractor_23 = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[23].output )
+feature_extractor_44 = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[44].output )
 
 
 def my_loss_msq(y_true, y_pred  ):
@@ -408,8 +408,8 @@ def my_loss_6(y_true, y_pred,
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3,4]
     msqTerm = tf.reduce_mean(squared_difference, axis=myax)
-    temp1 = feature_extractor(y_true)
-    temp2 = feature_extractor(y_pred)
+    temp1 = feature_extractor_44(y_true)
+    temp2 = feature_extractor_44(y_pred)
     vggsquared_difference = tf.square(temp1-temp2)
     vggTerm = tf.reduce_mean(vggsquared_difference, axis=myax)
     loss = msqTerm * msqwt + vggTerm * fw
@@ -449,3 +449,20 @@ for myrs in range( 100000 ):
             myssimBI = tf.image.psnr( patchesUpTeTfB * 220, patchesOrigTeTfB* 220, max_val=255 )
             myssimBI = tf.reduce_mean( myssimBI ).numpy()
             print( "PSNR Lin: " + str( myssimBI ) + " SR: " + str( myssimSR ), flush=True  )
+
+
+
+
+#
+patchesPred = mdl( patchesResamTeTf )
+squared_difference = tf.square(patchesPred - patchesOrigTeTf)
+msqTerm = tf.reduce_mean(squared_difference )
+vggTerm = tf.reduce_mean(tf.square(feature_extractor(patchesOrigTeTf)-feature_extractor(patchesPred)))
+vggTerm = tf.reduce_mean(tf.square(feature_extractor_23(patchesOrigTeTf)-feature_extractor_23(patchesPred)))
+# vggTerm = tf.reduce_mean(tf.square(feature_extractor_44(patchesOrigTeTf)-feature_extractor_44(patchesPred)))
+# qcTerm = tf.reduce_mean( tf.square( qcmodel( patchesPred/127.5 ) - qcmodel( patchesHiTe/127.5 ) ), axis=[0])
+tvTerm = tf.reduce_mean( tf.image.total_variation( tf.squeeze(patchesPred[0,:,:,:,:] ) ))
+print( msqTerm * 10 )
+print( vggTerm * 1500  )
+print( tvTerm  )
+my_loss_6( patchesPred, patchesOrigTeTf )
