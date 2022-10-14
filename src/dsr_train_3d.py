@@ -21,7 +21,7 @@ import random
 # get_ipython().system('pip install git+https://github.com/ANTsX/ANTsPyNet')
 import ants
 
-import dbpn_arch
+import src.dbpn_arch
 
 
 import ants
@@ -195,6 +195,8 @@ grader = antspynet.create_resnet_model_3d(
 graderfn = os.path.expanduser("~" + "/.antspyt1w/resnet_grader.h5" )
 grader.load_weights( graderfn)
 feature_extractor = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[6].output )
+feature_extractor_21 = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[21].output )
+feature_extractor_21 = tf.keras.Model( inputs=grader.inputs, outputs=grader.layers[21].output )
 
 
 def my_loss_msq(y_true, y_pred  ):
@@ -207,15 +209,13 @@ def my_loss_msq(y_true, y_pred  ):
 # empirical evidence suggests that making covolutions and strides evenly<br>
 # divisible by each other reduces artifacts.  2*3=6.
 
-# In[82]:
-
 nfilt=64
 nff = 256
 convn = 6
 lastconv = 3
 nbp=7
 ofn='./models/dsr3d_'+str(strider)+'up_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(lastconv)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
-mdl = dbpn_arch.dbpn( (None,None,None,1),
+mdl = src.dbpn_arch.dbpn( (None,None,None,1),
   number_of_outputs=1,
   number_of_base_filters=nfilt,
   number_of_feature_filters=nff,
