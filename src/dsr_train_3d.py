@@ -21,7 +21,12 @@ import random
 # get_ipython().system('pip install git+https://github.com/ANTsX/ANTsPyNet')
 import ants
 
-import dbpn_arch
+plaindb=False
+try:
+  import src.dbpn_arch
+except ImportError:
+  import dbpn_arch
+  plaindb=True
 
 
 import ants
@@ -217,14 +222,24 @@ convn = 6
 lastconv = 3
 nbp=7
 ofn='./models/dsr3d_'+str(strider)+'up_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(lastconv)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
-mdl = dbpn_arch.dbpn( (None,None,None,1),
-  number_of_outputs=1,
-  number_of_base_filters=nfilt,
-  number_of_feature_filters=nff,
-  number_of_back_projection_stages=nbp,
-  convolution_kernel_size=(convn, convn, convn),
-  strides=(strider, strider, strider),
-  last_convolution=(lastconv, lastconv, lastconv), number_of_loss_functions=1, interpolation='nearest')
+if plaindb:
+    mdl = dbpn_arch.dbpn( (None,None,None,1),
+      number_of_outputs=1,
+      number_of_base_filters=nfilt,
+      number_of_feature_filters=nff,
+      number_of_back_projection_stages=nbp,
+      convolution_kernel_size=(convn, convn, convn),
+      strides=(strider, strider, strider),
+      last_convolution=(lastconv, lastconv, lastconv), number_of_loss_functions=1, interpolation='nearest')
+else:
+    mdl = src.dbpn_arch.dbpn( (None,None,None,1),
+      number_of_outputs=1,
+      number_of_base_filters=nfilt,
+      number_of_feature_filters=nff,
+      number_of_back_projection_stages=nbp,
+      convolution_kernel_size=(convn, convn, convn),
+      strides=(strider, strider, strider),
+      last_convolution=(lastconv, lastconv, lastconv), number_of_loss_functions=1, interpolation='nearest')
 
 # collect all the images you have locally
 
