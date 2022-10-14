@@ -287,7 +287,7 @@ rmodelnn = tf.keras.Model(inputs=[myinput, mytarget], outputs=outputnn)
 def my_generator_dsr( nPatches , nImages = 16, istest=False,
     target_patch_size=psz,
     target_patch_size_low=pszlo,
-    patch_scaler=True, verbose = False ):
+    patch_scaler=patch_scale, verbose = False ):
     while True:
         for myn in range(nImages):
             patchesOrig = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
@@ -336,7 +336,7 @@ def my_generator_dsr( nPatches , nImages = 16, istest=False,
 def my_generator_dpr( nPatches , nImages = 16, istest=False,
     target_patch_size=psz,
     target_patch_size_low=psz,
-    patch_scaler=True, verbose = False ):
+    patch_scaler=patch_scale, verbose = False ):
     while True:
         for myn in range(nImages):
             patchesOrig = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
