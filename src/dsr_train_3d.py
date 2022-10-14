@@ -21,7 +21,7 @@ import random
 # get_ipython().system('pip install git+https://github.com/ANTsX/ANTsPyNet')
 import ants
 
-import src.dbpn_arch
+import dbpn_arch
 
 
 import ants
@@ -217,7 +217,7 @@ convn = 6
 lastconv = 3
 nbp=7
 ofn='./models/dsr3d_'+str(strider)+'up_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(lastconv)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
-mdl = src.dbpn_arch.dbpn( (None,None,None,1),
+mdl = dbpn_arch.dbpn( (None,None,None,1),
   number_of_outputs=1,
   number_of_base_filters=nfilt,
   number_of_feature_filters=nff,
