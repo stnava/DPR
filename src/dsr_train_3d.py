@@ -138,6 +138,8 @@ offsetIntensity = 127.5
 # set up strides and patch sizes - **these could also be explored empirically**
 pszlo = 32
 strider = 1 # this controls the amount of upsampling  -- 1 = none
+if strider == 1:
+    pszlo = 64
 psz = pszlo * strider
 
 # generate a random corner index for a patch
