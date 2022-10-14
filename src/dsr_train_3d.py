@@ -137,7 +137,7 @@ offsetIntensity = 127.5
 
 # set up strides and patch sizes - **these could also be explored empirically**
 pszlo = 32
-strider = 2 # this controls the amount of upsampling  -- 1 = none
+strider = 1 # this controls the amount of upsampling  -- 1 = none
 psz = pszlo * strider
 
 # generate a random corner index for a patch
@@ -284,7 +284,7 @@ rmodelnn = tf.keras.Model(inputs=[myinput, mytarget], outputs=outputnn)
 # this generator randomly chooses between linear and nearest neighbor downsampling.<br>
 # the *patch_scale* option can also be seen here which impacts how the network<br>
 # sees/learns from image intensity.
-def my_generator( nPatches , nImages = 16, istest=False,
+def my_generator_dsr( nPatches , nImages = 16, istest=False,
     target_patch_size=psz,
     target_patch_size_low=pszlo,
     patch_scaler=True, verbose = False ):
@@ -310,10 +310,6 @@ def my_generator( nPatches , nImages = 16, istest=False,
             for jj in range(len(spc)):
                 newspc.append(spc[jj]*strider)
             interp_type = random.choice( [0,1] )
-            # masker = ants.threshold_image(img,0.01,1)
-            # rmasker = ants.threshold_image(rimg,0.01,1)
-            # rimg = ants.crop_image( rimg * rmasker, masker )
-            # img = ants.crop_image( img * masker, masker )
             for myb in range(nPatches):
                 imgp = get_random_patch( img, target_patch_size )
                 imgpmin = imgp.min()
@@ -336,6 +332,45 @@ def my_generator( nPatches , nImages = 16, istest=False,
                 yield (patchesResam, patchesOrig,patchesUp)
             yield (patchesResam, patchesOrig)
 
+
+def my_generator_dpr( nPatches , nImages = 16, istest=False,
+    target_patch_size=psz,
+    target_patch_size_low=psz,
+    patch_scaler=True, verbose = False ):
+    while True:
+        for myn in range(nImages):
+            patchesOrig = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
+            patchesResam = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
+            if not istest:
+                imgfn = random.sample( imgfnsTrain, 1 )[0]
+            else:
+                patchesUp = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
+                imgfn = random.sample( imgfnsTest, 1 )[0]
+            if verbose:
+                print(imgfn)
+            img = ants.image_read( imgfn ).iMath("Normalize")
+            if img.components > 1:
+                img = ants.split_channels(img)[0]
+            rRotGenerator = ants.contrib.RandomRotate3D( ( -25, 25 ), reference=img )
+            tx0 = rRotGenerator.transform()
+            tx0inv = ants.invert_ants_transform(tx0)
+            rimg = tx0.apply_to_image( img )
+            rimg = tx0inv.apply_to_image( rimg )
+            interp_type = random.choice( [0,1] )
+            for myb in range(nPatches):
+                imgp1, imgp2 = get_random_patch_pair( img, rimg, patchWidth=target_patch_size )
+                patchesOrig[myb,:,:,:,0] = imgp1.numpy()
+                patchesResam[myb,:,:,:,0] = imgp2.numpy()
+            patchesOrig = tf.cast( patchesOrig, "float32")
+            patchesResam = tf.cast( patchesResam, "float32")
+            yield (patchesResam, patchesOrig)
+
+
+
+
+
+
+
 # instanstiate the generator function with a given sub-batch and total batch size<br>
 # i dont entirely understand how this works (it's farily new) but it seems to<br>
 # spit off sub-batches of the given size until it's exhausted the total number<br>
@@ -344,8 +379,14 @@ def my_generator( nPatches , nImages = 16, istest=False,
 # In[113]:
 
 mybs = 1
+if strider > 1:
+    my_generator = my_generator_dsr
+else:
+    my_generator = my_generator_dpr
+
 mydatgen = my_generator( 1, mybs, istest=False , verbose=False) # FIXME for a real training run
 mydatgenTest = my_generator( 1, mybs, istest=True, verbose=True) # FIXME for a real training run
+
 patchesResamTeTf, patchesOrigTeTf, patchesUpTeTf = next( mydatgenTest )
 
 # for cpu testing - too costly to run on gpu - will take cpu penalty here
