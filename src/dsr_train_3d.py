@@ -364,7 +364,7 @@ def my_generator_dpr( nPatches , nImages = 16, istest=False,
             patchesOrig = tf.cast( patchesOrig, "float32")
             patchesResam = tf.cast( patchesResam, "float32")
             if istest:
-                yield (patchesResam, patchesOrig,patchesOrig)
+                yield (patchesResam, patchesOrig,patchesResam)
             yield (patchesResam, patchesOrig)
 
 
