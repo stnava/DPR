@@ -11,7 +11,11 @@ import os.path
 from os import path
 from pathlib import Path
 import sys
-path_root = Path(__file__)
+if '__file__' in vars() or '__file__' in globals():
+    path_root = Path(__file__)
+else:
+    __file__='./'
+    path_root = Path(__file__)
 sys.path.append(str(path_root))
 
 import numpy as np
@@ -420,8 +424,8 @@ for k in range( 11 ):
 
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 10.0 ),
-  fw=tf.constant( 1500.0), # this is a starter weight - might need to be optimized
-  tvwt = tf.constant( 1.0e-8 ) ): # this is a starter weight - might need to be optimized
+  fw=tf.constant( 150.0), # this is a starter weight - might need to be optimized
+  tvwt = tf.constant( 1.0e-7 ) ): # this is a starter weight - might need to be optimized
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3,4]
     msqTerm = tf.reduce_mean(squared_difference, axis=myax)
@@ -476,10 +480,10 @@ squared_difference = tf.square(patchesPred - patchesOrigTeTf)
 msqTerm = tf.reduce_mean(squared_difference )
 vggTerm = tf.reduce_mean(tf.square(feature_extractor(patchesOrigTeTf)-feature_extractor(patchesPred)))
 vggTerm = tf.reduce_mean(tf.square(feature_extractor_23(patchesOrigTeTf)-feature_extractor_23(patchesPred)))
-# vggTerm = tf.reduce_mean(tf.square(feature_extractor_44(patchesOrigTeTf)-feature_extractor_44(patchesPred)))
+vggTerm = tf.reduce_mean(tf.square(feature_extractor_44(patchesOrigTeTf)-feature_extractor_44(patchesPred)))
 # qcTerm = tf.reduce_mean( tf.square( qcmodel( patchesPred/127.5 ) - qcmodel( patchesHiTe/127.5 ) ), axis=[0])
 tvTerm = tf.reduce_mean( tf.image.total_variation( tf.squeeze(patchesPred[0,:,:,:,:] ) ))
 print( msqTerm * 10 )
-print( vggTerm * 1500  )
-print( tvTerm  )
+print( vggTerm * 150  )
+print( tvTerm  * 1e-7 )
 my_loss_6( patchesPred, patchesOrigTeTf )
