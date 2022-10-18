@@ -432,8 +432,8 @@ for k in range( 11 ):
 
 def my_loss_6(y_true, y_pred,
   msqwt = tf.constant( 10.0 ),
-  fw=tf.constant( 150.0), # this is a starter weight - might need to be optimized
-  tvwt = tf.constant( 1.0e-7 ) ): # this is a starter weight - might need to be optimized
+  fw=tf.constant( 2000.0), # this is a starter weight - might need to be optimized
+  tvwt = tf.constant( 5.0e-8 ) ): # this is a starter weight - might need to be optimized
     squared_difference = tf.square(y_true - y_pred)
     myax = [1,2,3,4]
     msqTerm = tf.reduce_mean(squared_difference, axis=myax)
