@@ -89,7 +89,7 @@ arglist = (sys.argv)
 arglist=["name",5,"True",0.5,256,"True","True"]
 nbp=int( arglist[1] )
 ctmod = 10
-patch_scale = False
+patch_scale = True
 
 
 # **Note**: loss function weights are important for performance and are typically<br>
@@ -380,6 +380,14 @@ def my_generator_dpr( nPatches , nImages = 16, istest=False,
             interp_type = random.choice( [0,1] )
             for myb in range(nPatches):
                 imgp1, imgp2 = get_random_patch_pair( img, rimg, patchWidth=target_patch_size )
+                imgpmin = imgp1.min()
+                if patch_scaler:
+                    imgp1 = imgp1 - imgpmin
+                    imgp2 = imgp2 - imgpmin
+                    imgpmax = imgp1.max()
+                    if imgpmax > 0 :
+                        imgp1 = imgp1 / imgpmax
+                        imgp2 = imgp2 / imgpmax
                 patchesOrig[myb,:,:,:,0] = imgp1.numpy()
                 patchesResam[myb,:,:,:,0] = imgp2.numpy()
             patchesOrig = tf.cast( patchesOrig, "float32")
