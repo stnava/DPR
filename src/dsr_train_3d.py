@@ -273,7 +273,7 @@ print( imgfns[0] )
 
 img = ants.image_read( imgfnsTrain[0] )
 img2 = ants.image_read( imgfnsTrain[1] )
-patch1, patch2 = get_random_patch_pair( img, img, patchWidth=target_patch_size )
+patch1, patch2 = get_random_patch_pair( img, img, patchWidth=pszlo )
 # ants.plot(patch1)
 # ants.plot(patch2)
 
