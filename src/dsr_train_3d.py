@@ -145,11 +145,16 @@ offsetIntensity = 127.5
 
 
 # set up strides and patch sizes - **these could also be explored empirically**
-pszlo = 32
-strider = 1 # this controls the amount of upsampling  -- 1 = none
-if strider == 1:
-    pszlo = 64
-psz = pszlo * strider
+pszlo = [72,72,12]
+strider = [1,1,6] # this controls the amount of upsampling  -- 1 = none
+psz=[]
+namer=''
+for k in range(len(strider)):
+    psz.append( pszlo[k] * strider[k] )
+    tailer=''
+    if k < (len(strider)-1):
+        tailer='x'
+    namer=namer+str(strider[k])+tailer
 
 # generate a random corner index for a patch
 
@@ -225,7 +230,7 @@ nff = 256
 convn = 6
 lastconv = 3
 nbp=7
-ofn='./models/dsr3d_'+str(strider)+'up_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(lastconv)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
+ofn='./models/dsr3d_'+namer+'up_' + str(nfilt) + '_' + str( nff ) + '_' + str(convn)+ '_' + str(lastconv)+ '_' + str(os.environ['CUDA_VISIBLE_DEVICES'])+'_v0.0.h5'
 if plaindb:
     mdl = dbpn_arch.dbpn( (None,None,None,1),
       number_of_outputs=1,
@@ -233,7 +238,7 @@ if plaindb:
       number_of_feature_filters=nff,
       number_of_back_projection_stages=nbp,
       convolution_kernel_size=(convn, convn, convn),
-      strides=(strider, strider, strider),
+      strides=(strider[0], strider[1], strider[2]),
       last_convolution=(lastconv, lastconv, lastconv), number_of_loss_functions=1, interpolation='nearest')
 else:
     mdl = src.dbpn_arch.dbpn( (None,None,None,1),
@@ -242,7 +247,7 @@ else:
       number_of_feature_filters=nff,
       number_of_back_projection_stages=nbp,
       convolution_kernel_size=(convn, convn, convn),
-      strides=(strider, strider, strider),
+      strides=(strider[0], strider[1], strider[2]),
       last_convolution=(lastconv, lastconv, lastconv), number_of_loss_functions=1, interpolation='nearest')
 
 # collect all the images you have locally
@@ -311,12 +316,12 @@ def my_generator_dsr( nPatches , nImages = 16, istest=False,
     patch_scaler=patch_scale, verbose = False ):
     while True:
         for myn in range(nImages):
-            patchesOrig = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
-            patchesResam = np.zeros(shape=(nPatches,target_patch_size_low,target_patch_size_low,target_patch_size_low,1))
+            patchesOrig = np.zeros(shape=(nPatches,target_patch_size[0],target_patch_size[1],target_patch_size[2],1))
+            patchesResam = np.zeros(shape=(nPatches,target_patch_size_low[0],target_patch_size_low[1],target_patch_size_low[2],1))
             if not istest:
                 imgfn = random.sample( imgfnsTrain, 1 )[0]
             else:
-                patchesUp = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
+                patchesUp = np.zeros(shape=patchesOrig.shape)
                 imgfn = random.sample( imgfnsTest, 1 )[0]
             if verbose:
                 print(imgfn)
@@ -329,7 +334,7 @@ def my_generator_dsr( nPatches , nImages = 16, istest=False,
             spc = ants.get_spacing( img )
             newspc = []
             for jj in range(len(spc)):
-                newspc.append(spc[jj]*strider)
+                newspc.append(spc[jj]*strider[jj])
             interp_type = random.choice( [0,1] )
             for myb in range(nPatches):
                 imgp = get_random_patch( img, target_patch_size )
@@ -360,12 +365,12 @@ def my_generator_dpr( nPatches , nImages = 16, istest=False,
     patch_scaler=patch_scale, verbose = False ):
     while True:
         for myn in range(nImages):
-            patchesOrig = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
-            patchesResam = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
+            patchesOrig = np.zeros(shape=(nPatches,target_patch_size[0],target_patch_size[1],target_patch_size[2],1))
+            patchesResam = np.zeros(shape=(nPatches,target_patch_size[0],target_patch_size[1],target_patch_size[2],1))
             if not istest:
                 imgfn = random.sample( imgfnsTrain, 1 )[0]
             else:
-                patchesUp = np.zeros(shape=(nPatches,target_patch_size,target_patch_size,target_patch_size,1))
+                patchesUp = np.zeros(shape=patchesOrig.shape)
                 imgfn = random.sample( imgfnsTest, 1 )[0]
             if verbose:
                 print(imgfn)
@@ -410,7 +415,7 @@ def my_generator_dpr( nPatches , nImages = 16, istest=False,
 # In[113]:
 
 mybs = 1
-if strider > 1:
+if strider[2] > 1:
     my_generator = my_generator_dsr
 else:
     my_generator = my_generator_dpr
