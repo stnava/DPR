@@ -172,7 +172,7 @@ def get_random_patch( img, patchWidth=psz ):
         inds = get_random_base_ind( full_dims = img.shape )
         hinds = [None,None,None]
         for k in range(len(inds)):
-            hinds[k] = inds[k] + patchWidth
+            hinds[k] = inds[k] + patchWidth[k]
         myimg = ants.crop_indices( img, inds, hinds )
         mystd = myimg.std()
     return myimg
@@ -184,7 +184,7 @@ def get_random_patch_pair( img, img2, patchWidth=psz ):
         inds = get_random_base_ind( full_dims = img.shape )
         hinds = [None,None,None]
         for k in range(len(inds)):
-            hinds[k] = inds[k] + patchWidth
+            hinds[k] = inds[k] + patchWidth[k]
         myimg = ants.crop_indices( img, inds, hinds )
         myimg2 = ants.crop_indices( img2, inds, hinds )
         mystd = myimg.std()
