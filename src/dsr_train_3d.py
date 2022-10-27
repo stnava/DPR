@@ -7,6 +7,15 @@
 
 
 #!/usr/bin/python3
+
+import os
+nthreads = str(8)
+os.environ["TF_NUM_INTEROP_THREADS"] = nthreads
+os.environ["TF_NUM_INTRAOP_THREADS"] = nthreads
+os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = nthreads
+os.environ["OPENBLAS_NUM_THREADS"] = nthreads
+os.environ["MKL_NUM_THREADS"] = nthreads
+
 import os.path
 from os import path
 from pathlib import Path
@@ -256,7 +265,7 @@ print("assemble images", flush=True )
 imgfns = glob.glob( "/raid/data_BA/brains/HCP/T*w/*nii.gz") + glob.glob( "/raid/data_BA/brains/HCP/T*w/*nii.gz")
 if len(imgfns) == 0:
     imgfns = glob.glob( "/Users/stnava/.antspyt1w/2*T1w*gz")
-random.shuffle(imgfns)
+random.shuffle( imgfns )
 # 90\% training data
 n = round( len( imgfns ) * 0.9 )
 imgfnsTrain = imgfns[0:n]      # just start small
@@ -267,8 +276,6 @@ imgfnsTest = imgfns[(n+1):len(imgfns)]    # just a few test for now
 img = ants.image_read( imgfnsTrain[0] )
 print( imgfns[0] )
 
-
-# In[91]:
 
 
 img = ants.image_read( imgfnsTrain[0] )
